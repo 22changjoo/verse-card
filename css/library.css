@@ -56,3 +56,15 @@
 .backup-btns .btn { flex: 1 1 200px; }
 .file-btn { cursor: pointer; }
 .empty { padding: 24px 8px; text-align: center; color: var(--muted); font-size: 14px; }
+
+@media (min-width: 1024px) {
+  .library-page .appbar, .lib-head { max-width: 1160px; padding-left: 32px; padding-right: 32px; }
+  .lib-head .notice { max-width: 720px; }
+  .lib { max-width: 1160px; padding: 16px 32px 48px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; column-gap: 36px; row-gap: 16px; align-items: start; }
+  .lib > .verse-list { grid-column: 1; grid-row: 1 / span 6; }
+  .lib > .backup-note, .lib > .lib-tools, .lib > .add-box, .lib > .backup { grid-column: 2; margin: 0; }
+  .lib > .backup-note { grid-row: 1; }
+  .lib > .lib-tools { grid-row: 2; }
+  .lib > .add-box { grid-row: 3; }
+  .lib > .backup { grid-row: 4; }
+}

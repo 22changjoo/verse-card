@@ -128,6 +128,7 @@ a { color: var(--primary); }
 
 /* ───────── 홈 ───────── */
 .home { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 22px; }
+.home-main, .home-side { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 .home-title { margin: 8px 0 0; font-size: 28px; font-weight: 700; line-height: 1.3; letter-spacing: -0.02em; }
 .home-sub { margin: -14px 0 0; font-size: 14px; color: var(--muted); }
 
@@ -180,6 +181,7 @@ a { color: var(--primary); }
 .privacy-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; font-size: 14px; }
 
 /* ───────── 단계 표시 ───────── */
+.center-col { display: contents; }
 .steps { display: flex; align-items: center; gap: 6px; padding: 4px 20px 6px; }
 .step {
   display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0;
@@ -269,6 +271,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--focus); out
 .chip:disabled { opacity: 0.4; cursor: not-allowed; }
 .chip.danger { color: var(--danger); border-color: var(--danger-line); background: transparent; }
 .chip .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25); flex: none; }
+:root[data-theme="dark"] .chip .dot { border-color: rgba(255, 255, 255, 0.55); }
 .chip small { font-size: 11px; opacity: 0.75; }
 
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -377,6 +380,44 @@ body[data-view="home"] .toast { bottom: 24px; }
   .print-sheet.a4x2::after { content: ""; position: absolute; left: 148.5mm; top: 10mm; bottom: 10mm; border-left: 0.3mm dashed #999; }
 }
 
-@media (min-width: 900px) {
-  body { padding-bottom: 0; }
+/* ═════════ 컴퓨터(넓은 화면): 대시보드형 배치 ═════════
+   카드 만들기는 3열(내용 · 미리보기 · 디자인/보내기)로 한 화면에 펼치고, 단계 이동은 쓰지 않는다. */
+@media (min-width: 1024px) {
+  .app { max-width: 1360px; padding: 0 32px; }
+  body[data-view="create"] .app { padding-bottom: 40px; }
+  .appbar { padding: 22px 0 14px; }
+
+  /* 홈: 왼쪽 큰 타일, 오른쪽 절기·최근·설정 */
+  .home { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: 56px; padding: 16px 0 56px; align-items: start; }
+  .home-title { font-size: 42px; margin-top: 12px; }
+  .home-sub { font-size: 16px; margin-top: -12px; }
+  .tile { min-height: 260px; padding: 24px; }
+  .tile-icon { width: 54px; height: 54px; }
+  .tile-text strong { font-size: 22px; }
+  .tile-text span { font-size: 14px; }
+  .hscroll { flex-wrap: wrap; overflow: visible; margin: 0; padding: 2px 0; }
+  .home-side { padding-top: 12px; }
+
+  /* 카드 만들기: 3열 — 왼쪽 내용 · 가운데 미리보기+보내기(고정) · 오른쪽 디자인 */
+  #viewCreate:not([hidden]) {
+    display: grid; grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.2fr) minmax(320px, 1fr);
+    column-gap: 28px; align-items: start;
+  }
+  .steps { display: none; }
+  .panel { padding: 0; }
+  .panel[data-panel="1"] { grid-column: 1; grid-row: 1; }
+  .panel[data-panel="2"] { grid-column: 3; grid-row: 1; }
+  .center-col {
+    display: flex; flex-direction: column; gap: 14px;
+    grid-column: 2; grid-row: 1; position: sticky; top: 16px; align-self: start;
+  }
+  .preview { position: static; padding: 0; background: none; }
+  .preview-panel { padding: 28px 20px 22px; }
+  .stepbar { position: static; padding: 0; background: none; }
+  .stepbar-inner { max-width: none; }
+  /* 컴퓨터에서는 마우스로 누르기 쉬운 크기로 */
+  .btn { min-height: 52px; }
+
+  .toast, body[data-view="home"] .toast { bottom: 28px; max-width: 480px; }
+  .sheet { margin: auto; border-radius: 24px; width: min(560px, 92vw); max-height: 86vh; }
 }

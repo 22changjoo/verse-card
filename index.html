@@ -40,6 +40,7 @@
 
 <!-- ───────── 홈 ───────── -->
 <section id="viewHome" class="home" aria-label="홈">
+  <div class="home-main">
   <h1 class="home-title">오늘은 어떤 말씀을<br>전해 드릴까요?</h1>
   <p class="home-sub">카드 유형을 고르면 바로 시작해요</p>
 
@@ -57,7 +58,9 @@
       <span class="tile-text"><strong>절기 인사 카드</strong><span>부활절·성탄절·추석<br>11가지 절기</span></span>
     </button>
   </div>
+  </div>
 
+  <div class="home-side">
   <section class="home-block" aria-labelledby="homeSeasonTitle">
     <h2 class="block-title" id="homeSeasonTitle">절기로 바로 만들기</h2>
     <div class="hscroll" id="homeSeasons"></div>
@@ -91,6 +94,7 @@
       </div>
     </div>
   </details>
+  </div>
 </section>
 
 <!-- ───────── 카드 만들기 (내용 → 디자인 → 보내기) ───────── -->
@@ -113,6 +117,8 @@
     </button>
   </nav>
 
+  <!-- 가운데 묶음: 미리보기 + 보내기(컴퓨터에서는 함께 화면에 고정, 휴대폰에서는 단계별로 따로 보임) -->
+  <div class="center-col">
   <section class="preview" aria-label="미리보기">
     <div class="preview-panel">
       <div class="preview-frame" id="previewFrame">
@@ -129,6 +135,43 @@
       </div>
     </div>
   </section>
+
+  <!-- 3단계 · 보내기 -->
+  <div class="panel" data-panel="3" hidden>
+    <div class="field summary">
+      <div class="avatar big" id="sumInitial" aria-hidden="true">말</div>
+      <div class="summary-text">
+        <div class="summary-to" id="sumTo">받는 분을 입력해 주세요</div>
+        <div class="summary-from" id="sumFrom">보낸 이를 입력해 주세요</div>
+      </div>
+      <div class="summary-meta" id="sumMeta"></div>
+    </div>
+
+    <div class="send-tiles">
+      <button type="button" class="btn tile-btn" id="btnSave">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+        이미지 저장
+      </button>
+      <button type="button" class="btn tile-btn" id="btnPrint">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>
+        엽서 인쇄
+      </button>
+    </div>
+    <p class="hint center">카카오톡 등으로 바로 보내려면 아래 <strong>공유하기</strong>를 누르세요.<br>공유가 안 되는 환경에서는 "이미지 저장" 후 사진첩에서 보내면 됩니다.</p>
+  </div>
+
+  <footer class="stepbar" id="stepbar" hidden>
+    <div class="stepbar-inner">
+      <button type="button" class="btn" id="stepPrev">이전</button>
+      <button type="button" class="btn primary grow" id="stepNext">다음 · 디자인</button>
+      <button type="button" class="btn primary grow" id="btnShare" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/></svg>
+        <span id="shareLabel">공유하기</span>
+      </button>
+    </div>
+  </footer>
+  </div>
+
 
   <!-- 1단계 · 내용 -->
   <div class="panel" data-panel="1">
@@ -277,29 +320,7 @@
     </div>
   </div>
 
-  <!-- 3단계 · 보내기 -->
-  <div class="panel" data-panel="3" hidden>
-    <div class="field summary">
-      <div class="avatar big" id="sumInitial" aria-hidden="true">말</div>
-      <div class="summary-text">
-        <div class="summary-to" id="sumTo">받는 분을 입력해 주세요</div>
-        <div class="summary-from" id="sumFrom">보낸 이를 입력해 주세요</div>
-      </div>
-      <div class="summary-meta" id="sumMeta"></div>
-    </div>
 
-    <div class="send-tiles">
-      <button type="button" class="btn tile-btn" id="btnSave">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
-        이미지 저장
-      </button>
-      <button type="button" class="btn tile-btn" id="btnPrint">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>
-        엽서 인쇄
-      </button>
-    </div>
-    <p class="hint center">카카오톡 등으로 바로 보내려면 아래 <strong>공유하기</strong>를 누르세요.<br>공유가 안 되는 환경에서는 "이미지 저장" 후 사진첩에서 보내면 됩니다.</p>
-  </div>
 
 </section>
 
@@ -335,16 +356,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<footer class="stepbar" id="stepbar" hidden>
-  <div class="stepbar-inner">
-    <button type="button" class="btn" id="stepPrev">이전</button>
-    <button type="button" class="btn primary grow" id="stepNext">다음 · 디자인</button>
-    <button type="button" class="btn primary grow" id="btnShare" hidden>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/></svg>
-      <span id="shareLabel">공유하기</span>
-    </button>
-  </div>
-</footer>
+
 
 <script src="js/vendor/modern-screenshot.js"></script>
 <script src="js/storage.js"></script>

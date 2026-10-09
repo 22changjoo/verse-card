@@ -25,6 +25,10 @@
   var BUILTIN_LOGO = 'assets/logo/leaf.png'; // 기본 로고(교회 로고 중 나뭇잎만)
   var logoData = { orig: null, mono: null, builtin: false };
 
+  // 컴퓨터(넓은 화면)인지: CSS의 대시보드 배치(min-width 1024px)와 같은 기준
+  var wideMQ = window.matchMedia('(min-width: 1024px)');
+  function isWide() { return wideMQ.matches; }
+
   var previewEl = document.querySelector('.preview');
   var previewFrame = $('previewFrame');
   var previewScale = $('previewScale');
@@ -138,9 +142,16 @@
   function fitScale() {
     var size = VerseCard.sizeOf(design);
     if (!previewEl.clientWidth) return; // 화면에 보이지 않을 때(홈 화면)는 계산하지 않는다
-    // 좌우 여백(16×2)과 미리보기 상자 안쪽 여백(12×2)을 뺀 폭
-    var maxW = Math.min(previewEl.clientWidth - 56, 420);
-    var maxH = Math.max(200, window.innerHeight * 0.34);
+    var maxW, maxH;
+    if (isWide()) {
+      // 컴퓨터: 가운데 열 전체를 쓰는 큰 미리보기 (상자 안쪽 여백 20×2를 뺀 폭)
+      maxW = Math.min(previewEl.clientWidth - 40, 720);
+      maxH = Math.max(300, window.innerHeight - 400); // 아래에 보내기 영역이 함께 보이도록 여유를 둔다
+    } else {
+      // 휴대폰: 좌우 여백(16×2)과 미리보기 상자 안쪽 여백(12×2)을 뺀 폭
+      maxW = Math.min(previewEl.clientWidth - 56, 420);
+      maxH = Math.max(200, window.innerHeight * 0.34);
+    }
     var scale = Math.min(maxW / size.w, maxH / size.h);
     previewFrame.style.width = Math.round(size.w * scale) + 'px';
     previewFrame.style.height = Math.round(size.h * scale) + 'px';
@@ -265,6 +276,16 @@
 
   function setStep(n) {
     ui.step = Math.max(1, Math.min(3, n));
+    // 컴퓨터(넓은 화면)에서는 세 영역을 한 화면에 모두 펼치므로 단계 전환을 쓰지 않는다.
+    if (isWide()) {
+      document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = false; });
+      $('stepPrev').hidden = true;
+      $('stepNext').hidden = true;
+      $('btnShare').hidden = false;
+      render();
+      return;
+    }
+    $('stepPrev').hidden = false;
     document.querySelectorAll('[data-panel]').forEach(function (p) {
       p.hidden = Number(p.dataset.panel) !== ui.step;
     });
@@ -814,6 +835,10 @@
       if (ui.step === 1) setView('home'); else setStep(ui.step - 1);
     });
     $('stepNext').addEventListener('click', function () { setStep(ui.step + 1); });
+    // 창 크기를 바꿔 휴대폰/컴퓨터 배치가 바뀌면 단계 표시를 다시 맞춘다.
+    wideMQ.addEventListener('change', function () {
+      if (ui.view === 'create') setStep(ui.step);
+    });
     window.addEventListener('popstate', function () {
       if (ui.view === 'create') setView('home', { fromPop: true });
     });
