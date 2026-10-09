@@ -118,7 +118,8 @@
       recent: Store.get('recent', []),
       recentClearedAt: Store.get('recentClearedAt', 0),
       settings: settingsAt ? {
-        at: settingsAt, sender: Store.get('sender', ''), closing: Store.get('closing', null), design: Store.get('design', null)
+        at: settingsAt, sender: Store.get('sender', ''), closing: Store.get('closing', null), design: Store.get('design', null),
+        favorites: Store.get('favorites', [])
       } : null,
       logo: logoAt ? (logoOrig ? { at: logoAt, orig: logoOrig, mono: Store.get('logoMono', '') } : { at: logoAt, removed: true }) : null
     };
@@ -133,6 +134,7 @@
       Store.setSilent('sender', parts.settings.sender || '');
       if (parts.settings.closing) Store.setSilent('closing', parts.settings.closing);
       if (parts.settings.design) Store.setSilent('design', parts.settings.design);
+      Store.setSilent('favorites', parts.settings.favorites || []);
       Store.setSilent('settingsAt', parts.settings.at);
     }
     if (parts.logo) {

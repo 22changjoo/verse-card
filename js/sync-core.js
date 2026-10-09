@@ -13,7 +13,7 @@
  *   library:{ texts:{id:{t,at}}, custom:{id:{ref,theme,text,at}}, deleted:{id:at} },
  *   history:{ entries:{id:{...}}, deleted:{id:at} },
  *   recent:{ items:{name:{honorific,at}}, clearedAt },
- *   settings:{ at, sender, closing, design } | null,
+ *   settings:{ at, sender, closing, design, favorites } | null,
  *   logo:{ at, orig, mono } | {at, removed:true} | null
  * }
  */
@@ -73,7 +73,8 @@
       out.settings = {
         at: num(s.settings.at), sender: typeof s.settings.sender === 'string' ? s.settings.sender : '',
         closing: s.settings.closing && typeof s.settings.closing === 'object' ? s.settings.closing : null,
-        design: s.settings.design && typeof s.settings.design === 'object' ? s.settings.design : null
+        design: s.settings.design && typeof s.settings.design === 'object' ? s.settings.design : null,
+        favorites: Array.isArray(s.settings.favorites) ? s.settings.favorites : []
       };
     }
     if (s.logo && typeof s.logo === 'object') {

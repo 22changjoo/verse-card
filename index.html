@@ -69,9 +69,13 @@
   </div>
 
   <div class="home-side">
-  <section class="home-block" aria-labelledby="homeSeasonTitle">
-    <h2 class="block-title" id="homeSeasonTitle">절기로 바로 만들기</h2>
-    <div class="hscroll" id="homeSeasons"></div>
+  <section class="home-block" aria-labelledby="homeFavTitle">
+    <div class="block-head">
+      <h2 class="block-title" id="homeFavTitle">즐겨찾기</h2>
+      <span class="hint" id="homeFavCount"></span>
+    </div>
+    <div class="fav-list" id="homeFav"></div>
+    <p class="hint" id="homeFavEmpty">자주 쓰는 주제와 디자인을 ☆로 저장해 두면 여기서 한 번에 시작할 수 있어요. (5개까지)</p>
   </section>
 
   <section class="home-block" aria-labelledby="homeHistoryTitle">
@@ -175,6 +179,7 @@
         엽서 인쇄
       </button>
     </div>
+    <button type="button" class="btn fav-save"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5.6L20 9l-4.3 3.8L17 18.5 12 15.5 7 18.5l1.3-5.7L4 9l5.6-.4z"/></svg>이 주제·디자인을 즐겨찾기에 저장</button>
     <p class="hint center">카카오톡 등으로 바로 보내려면 아래 <strong>공유하기</strong>를 누르세요.<br>공유가 안 되는 환경에서는 "이미지 저장" 후 사진첩에서 보내면 됩니다.</p>
   </div>
 
@@ -337,6 +342,7 @@
       </div>
       <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "자동"은 밝은 배경에서는 로고 원래 색, 어두운 배경에서는 카드에 어울리는 한 가지 색으로 바꿔 줍니다.</p>
     </div>
+    <button type="button" class="btn fav-save"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5.6L20 9l-4.3 3.8L17 18.5 12 15.5 7 18.5l1.3-5.7L4 9l5.6-.4z"/></svg>지금 주제·디자인을 즐겨찾기에 저장</button>
   </div>
 
 

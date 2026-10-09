@@ -11,7 +11,7 @@
   // 동기화 대상 항목. 이 값이 사용자 조작으로 바뀌면 'verse-store-changed' 이벤트를 보내 자동 동기화를 예약한다.
   var SYNC_KEYS = {
     library: 1, history: 1, recent: 1, recentClearedAt: 1,
-    sender: 1, closing: 1, design: 1, settingsAt: 1,
+    sender: 1, closing: 1, design: 1, favorites: 1, settingsAt: 1,
     logo: 1, logoMono: 1, logoAt: 1
   };
 

@@ -400,21 +400,110 @@
     $('shareLabel').textContent = n > 1 ? n + '장 한 번에 공유하기' : '공유하기';
   }
 
-  // 홈 화면: 절기 바로가기
-  function buildHomeSeasons() {
-    var box = $('homeSeasons');
-    config.seasons.forEach(function (s) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'pill';
-      b.dataset.season = s.id;
-      var dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.style.background = s.colors.accent;
-      b.appendChild(dot);
-      b.appendChild(document.createTextNode(s.name));
-      box.appendChild(b);
+  // ── 즐겨찾기: 자주 쓰는 주제(심방 상황·절기)와 디자인을 5개까지 저장 ──
+  var MAX_FAVORITES = 5;
+  var STAR_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5.6L20 9l-4.3 3.8L17 18.5 12 15.5 7 18.5l1.3-5.7L4 9l5.6-.4z"/></svg>';
+  var CLOSE_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  function loadFavorites() {
+    var list = VerseStore.get('favorites', []);
+    return Array.isArray(list) ? list.slice(0, MAX_FAVORITES) : [];
+  }
+  function storeFavorites(list) {
+    VerseStore.set('favorites', list);
+    touchSettings();
+    renderFavorites();
+  }
+
+  function favoriteLabel(f) {
+    var topic = f.type === 'season'
+      ? (byId(config.seasons, f.season) || {}).name
+      : (byId(greetings.situations, f.situation) || {}).name;
+    return [topic || (f.type === 'season' ? '절기 카드' : '심방 카드')];
+  }
+
+  function favoriteSub(f) {
+    var tpl = byId(config.templates, f.template), size = byId(config.sizes, f.size);
+    return [f.type === 'season' ? '절기 카드' : '심방 카드', tpl && tpl.name, size && size.name].filter(Boolean).join(' · ');
+  }
+
+  function renderFavorites() {
+    var box = $('homeFav');
+    if (!box) return;
+    box.replaceChildren();
+    var list = loadFavorites();
+    list.forEach(function (f) {
+      var row = document.createElement('div');
+      row.className = 'fav-item';
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'fav-go';
+      go.dataset.fav = f.id;
+      var star = document.createElement('span');
+      star.innerHTML = STAR_SVG; // 고정 문자열
+      var text = document.createElement('span');
+      text.style.minWidth = '0';
+      var name = document.createElement('div');
+      name.className = 'fav-name';
+      name.textContent = f.name;
+      var sub = document.createElement('div');
+      sub.className = 'fav-sub';
+      sub.textContent = favoriteSub(f);
+      text.appendChild(name); text.appendChild(sub);
+      go.appendChild(star); go.appendChild(text);
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'icon-btn small fav-del';
+      del.dataset.favDel = f.id;
+      del.setAttribute('aria-label', f.name + ' 즐겨찾기 지우기');
+      del.innerHTML = CLOSE_SVG; // 고정 문자열
+      row.appendChild(go); row.appendChild(del);
+      box.appendChild(row);
     });
+    $('homeFavEmpty').hidden = list.length > 0;
+    $('homeFavCount').textContent = list.length ? list.length + '/' + MAX_FAVORITES : '';
+  }
+
+  function saveFavorite() {
+    var list = loadFavorites();
+    if (list.length >= MAX_FAVORITES) {
+      toast('즐겨찾기는 ' + MAX_FAVORITES + '개까지예요. 홈에서 하나를 지운 뒤 저장해 주세요.');
+      return;
+    }
+    var fav = {
+      id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      type: state.type,
+      situation: state.type === 'visit' ? $('situation').value : '',
+      season: design.season,
+      template: design.template, size: design.size, palette: design.palette, font: design.font,
+      deco: design.deco, step: design.step
+    };
+    var topic = favoriteLabel(fav)[0];
+    var tpl = byId(config.templates, fav.template);
+    var name = window.prompt('즐겨찾기 이름을 정해 주세요.', topic + (tpl ? ' · ' + tpl.name : ''));
+    if (name === null) return;
+    fav.name = name.trim() || topic;
+    list.push(fav);
+    storeFavorites(list);
+    toast('즐겨찾기에 저장했어요. 홈에서 바로 시작할 수 있어요.');
+  }
+
+  function applyFavorite(f) {
+    setType(f.type === 'season' ? 'season' : 'visit');
+    if (f.type !== 'season' && f.situation && byId(greetings.situations, f.situation)) $('situation').value = f.situation;
+    if (byId(config.templates, f.template)) design.template = f.template;
+    if (byId(config.sizes, f.size)) design.size = f.size;
+    design.palette = f.palette && byId(config.palettes, f.palette) ? f.palette : null;
+    design.font = f.font && byId(config.fonts, f.font) ? f.font : null;
+    design.deco = f.deco !== false;
+    design.step = Math.max(STEP_MIN, Math.min(STEP_MAX, parseInt(f.step, 10) || 0));
+    var season = f.type === 'season' ? byId(config.seasons, f.season) : null;
+    design.season = season ? season.id : null;
+    if (season) { $('season').value = season.id; $('seasonTitle').value = season.title; }
+    else if (f.type === 'season') $('season').value = '';
+    syncControls(); saveDesign(); refreshSuggestions(); render();
+    ui.step = 1;
+    setView('create');
   }
 
   function startCard(type) {
@@ -894,14 +983,21 @@
     document.querySelectorAll('[data-start]').forEach(function (b) {
       b.addEventListener('click', function () { startCard(b.dataset.start); });
     });
-    $('homeSeasons').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-season]');
-      if (!b) return;
-      setType('season');
-      applySeason(b.dataset.season);
-      ui.step = 1;
-      setView('create');
+    $('homeFav').addEventListener('click', function (e) {
+      var del = e.target.closest('[data-fav-del]');
+      if (del) {
+        var f = loadFavorites().filter(function (x) { return x.id === del.dataset.favDel; })[0];
+        if (f && window.confirm('즐겨찾기 "' + f.name + '"을(를) 지울까요?')) {
+          storeFavorites(loadFavorites().filter(function (x) { return x.id !== f.id; }));
+        }
+        return;
+      }
+      var go = e.target.closest('[data-fav]');
+      if (!go) return;
+      var fav = loadFavorites().filter(function (x) { return x.id === go.dataset.fav; })[0];
+      if (fav) applyFavorite(fav);
     });
+    document.querySelectorAll('.fav-save').forEach(function (b) { b.addEventListener('click', saveFavorite); });
     $('homeRecent').addEventListener('click', function (e) {
       var b = e.target.closest('[data-name]');
       if (!b) return;
@@ -931,7 +1027,7 @@
     // 구글 드라이브 동기화로 다른 기기의 변경을 받았을 때: 목록은 바로 갱신하고, 설정·로고는 새로고침으로 적용한다.
     document.addEventListener('verse-sync-applied', function (ev) {
       var c = (ev.detail && ev.detail.changed) || {};
-      renderRecent(); renderHomeHistory(); updateSentHint();
+      renderRecent(); renderHomeHistory(); renderFavorites(); updateSentHint();
       if (c.settings || c.logo) $('syncBanner').hidden = false;
     });
     $('syncReload').addEventListener('click', function () { location.reload(); });
@@ -1079,7 +1175,7 @@
     if (state.type === 'season' && design.season) $('seasonTitle').value = byId(config.seasons, design.season).title;
     setType(state.type);
     lastDesignJson = JSON.stringify(design); // 시작할 때의 자동 보정은 저장하지 않는다
-    buildHomeSeasons();
+    renderFavorites();
     syncThemeSeg();
     setView('home');
     if (window.VerseSync) VerseSync.mountPanel($('syncPanel'));
