@@ -1,0 +1,133 @@
+/*
+ * 카드는 항상 1080px 너비 기준으로 그린 뒤 미리보기에서 축소한다.
+ * 색·글꼴·글자 크기는 render.js가 카드에 CSS 변수로 넣어 준다:
+ *   --bg --ink --sub --accent --line --font --verse-size --verse-weight --ai --ta
+ * 템플릿을 추가하려면 data/templates.json에 항목을 넣고, render.js의 DECOR와 아래 블록을 추가한다.
+ */
+
+.card {
+  position: relative;
+  overflow: hidden;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  --sans: 'Noto Sans KR', system-ui, sans-serif;
+}
+
+/* ───── 크기별 여백·글자 크기 ───── */
+.size-square    { --inset: 72px; --pt: 80px;  --pb: 72px;  --px: 104px; --gap: 22px; --to-size: 26px; --greeting-size: 30px; --ref-size: 24px; --from-size: 26px; }
+.size-portrait  { --inset: 72px; --pt: 120px; --pb: 104px; --px: 104px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; }
+.size-wallpaper { --inset: 56px; --pt: 300px; --pb: 260px; --px: 96px;  --gap: 32px; --to-size: 30px; --greeting-size: 34px; --ref-size: 28px; --from-size: 30px; }
+.size-postcard  { --inset: 64px; --pt: 120px; --pb: 104px; --px: 100px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; }
+
+/* ───── 공통 구조 ───── */
+.card .decor { position: absolute; inset: 0; pointer-events: none; }
+.card .content {
+  position: absolute;
+  inset: var(--inset);
+  padding: var(--pt) var(--px) var(--pb);
+  display: flex;
+  flex-direction: column;
+  align-items: var(--ai);
+  text-align: var(--ta);
+  gap: var(--gap);
+}
+.card .icon { flex: none; align-self: var(--ai); color: var(--accent); }
+.card .icon svg { display: block; height: 80px; width: auto; }
+.card .to, .card .greeting, .card .verse, .card .ref, .card .footer, .card .from {
+  width: 100%;
+  box-sizing: border-box; /* 글자 폭에 딱 맞게 잡히면 이미지 변환 시 줄바꿈이 달라질 수 있어 폭을 명시 */
+}
+.card .to {
+  flex: none;
+  font-family: var(--sans); font-size: var(--to-size); letter-spacing: 0.04em; color: var(--sub);
+}
+.card .greeting {
+  flex: none;
+  font-size: var(--greeting-size); line-height: 1.7;
+  color: color-mix(in srgb, var(--ink) 82%, var(--bg));
+  white-space: pre-line;
+}
+.card .body {
+  flex: 1 1 auto; min-height: 0; width: 100%;
+  display: flex; flex-direction: column; justify-content: center; align-items: var(--ai);
+  gap: 28px;
+}
+.card .rule { flex: none; width: 56px; height: 2px; background: var(--accent); }
+.card .verse {
+  flex: 0 1 auto; min-height: 0; overflow: hidden; /* 넘쳐도 출처·보낸 이를 침범하지 않음 */
+  font-size: var(--verse-size); font-weight: var(--verse-weight); line-height: 1.75;
+  white-space: pre-line;
+}
+.card .ref {
+  flex: none;
+  font-family: var(--sans); font-size: var(--ref-size); letter-spacing: 0.04em; color: var(--sub);
+}
+.card .pageno {
+  flex: none; width: 100%; box-sizing: border-box;
+  font-family: var(--sans); font-size: calc(var(--ref-size) - 2px); letter-spacing: 0.08em; color: var(--sub);
+  opacity: 0.8;
+}
+.card .footer {
+  flex: none; display: flex; flex-direction: column; align-items: var(--ai); gap: 16px;
+}
+.card .logo { display: block; max-height: 72px; max-width: 280px; width: auto; height: auto; object-fit: contain; }
+.card .from { font-size: var(--from-size); color: color-mix(in srgb, var(--ink) 75%, var(--bg)); }
+
+/* 장식 끄기 */
+.card.no-deco .decor,
+.card.no-deco .icon { display: none; }
+
+/* 절기 제목 (예: "부활을 축하합니다") */
+.card .season-title {
+  flex: none; width: 100%; box-sizing: border-box;
+  font-size: var(--title-size); font-weight: 700; letter-spacing: 0.06em; line-height: 1.4;
+  color: var(--accent);
+}
+.size-square    { --title-size: 36px; }
+.size-portrait  { --title-size: 40px; }
+.size-wallpaper { --title-size: 44px; }
+.size-postcard  { --title-size: 40px; }
+
+/* ───── 절기 맞춤 (색·상징 도형은 절기마다 바뀜) ───── */
+.tpl-season .frame-a { position: absolute; inset: 56px; border: 2px solid var(--line); }
+.tpl-season .frame-b { position: absolute; inset: 72px; border: 2px solid color-mix(in srgb, var(--line) 45%, transparent); }
+.tpl-season .wash {
+  position: absolute; left: 50%; top: -420px; width: 1200px; height: 1200px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle closest-side, color-mix(in srgb, var(--accent) 16%, transparent), transparent);
+}
+.tpl-season .icon svg { height: 112px; }
+
+/* ───── 일반 1 · 밝은 크림 ───── */
+.tpl-cream .frame-a { position: absolute; inset: 56px; border: 2px solid var(--line); }
+.tpl-cream .frame-b { position: absolute; inset: 72px; border: 2px solid color-mix(in srgb, var(--line) 45%, transparent); }
+
+/* ───── 일반 2 · 짙은 네이비 ───── */
+.tpl-navy .frame-a { position: absolute; inset: 48px; border: 2px solid var(--line); opacity: 0.55; }
+.tpl-navy .circle {
+  position: absolute; left: 50%; border: 2px solid var(--accent); border-radius: 50%;
+  transform: translateX(-50%);
+}
+.tpl-navy .c1 { width: 1500px; height: 1500px; bottom: -1180px; opacity: 0.18; }
+.tpl-navy .c2 { width: 1240px; height: 1240px; bottom: -1050px; opacity: 0.14; }
+.tpl-navy .icon svg { height: 68px; }
+
+/* ───── 일반 3 · 연한 하늘 ───── */
+.tpl-sky .blob { position: absolute; border-radius: 50%; }
+.tpl-sky .b1 { width: 560px; height: 560px; right: -160px; top: -170px; background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.tpl-sky .b2 { width: 620px; height: 620px; left: -200px; bottom: -220px; background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.tpl-sky .icon .bar { width: 72px; height: 6px; border-radius: 3px; background: var(--accent); margin: 8px 0; }
+
+/* ───── 일반 4 · 미색 종이 ───── */
+/* 질감 이미지는 render.js가 만들어 background-image로 넣는다. */
+.tpl-paper .grain { position: absolute; inset: 0; background-size: 256px 256px; image-rendering: pixelated; }
+.tpl-paper .frame-a { position: absolute; inset: 60px; border: 2px solid var(--line); opacity: 0.5; }
+.tpl-paper .seal {
+  width: 68px; height: 68px; box-sizing: border-box;
+  border: 3px solid var(--accent); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; color: var(--accent);
+}

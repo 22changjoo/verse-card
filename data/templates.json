@@ -1,0 +1,71 @@
+{
+  "sizes": [
+    { "id": "square",    "name": "정사각",   "note": "카톡 대화방", "w": 1080, "h": 1080, "verseSize": 42 },
+    { "id": "portrait",  "name": "세로",     "note": "4:5 · 긴 말씀", "w": 1080, "h": 1350, "verseSize": 46 },
+    { "id": "wallpaper", "name": "배경화면", "note": "9:16 · 휴대폰", "w": 1080, "h": 1920, "verseSize": 52 },
+    { "id": "postcard",  "name": "엽서",     "note": "100×148mm 인쇄", "w": 1080, "h": 1598, "verseSize": 46 }
+  ],
+  "fonts": [
+    { "id": "gowun",     "name": "고운바탕",   "family": "'Gowun Batang', serif" },
+    { "id": "notoserif", "name": "노토 명조",  "family": "'Noto Serif KR', serif" },
+    { "id": "nanum",     "name": "나눔명조",   "family": "'Nanum Myeongjo', serif" }
+  ],
+  "templates": [
+    {
+      "id": "cream", "name": "밝은 크림", "font": "gowun", "align": "center", "verseWeight": 400,
+      "colors": { "bg": "#faf3e3", "ink": "#3b2f24", "sub": "#8a6a4c", "accent": "#b5835a", "line": "#c9a37c" }
+    },
+    {
+      "id": "navy", "name": "짙은 네이비", "font": "notoserif", "align": "center", "verseWeight": 400,
+      "colors": { "bg": "#14213d", "ink": "#f4efe3", "sub": "#d9b26f", "accent": "#d9b26f", "line": "#d9b26f" }
+    },
+    {
+      "id": "sky", "name": "연한 하늘", "font": "nanum", "align": "left", "verseWeight": 700,
+      "colors": { "bg": "#e6f1f8", "ink": "#1f3a52", "sub": "#4a7ba1", "accent": "#5b92b8", "line": "#5b92b8" }
+    },
+    {
+      "id": "paper", "name": "미색 종이", "font": "notoserif", "align": "left", "verseWeight": 400,
+      "colors": { "bg": "#f1ebdc", "ink": "#2d2a26", "sub": "#6b5547", "accent": "#8a5a44", "line": "#8a5a44" }
+    },
+    {
+      "id": "season", "name": "절기 맞춤", "seasonOnly": true, "font": "gowun", "align": "center", "verseWeight": 400,
+      "colors": { "bg": "#faf3e3", "ink": "#3b2f24", "sub": "#8a6a4c", "accent": "#b5835a", "line": "#c9a37c" }
+    }
+  ],
+  "seasons": [
+    { "id": "newyear",  "name": "신년",     "title": "새해 복 많이 받으세요",
+      "colors": { "bg": "#fdf3e3", "ink": "#3a2a1c", "sub": "#9a6a3a", "accent": "#c4572b", "line": "#d9a574" } },
+    { "id": "seol",     "name": "설",       "title": "설 명절 잘 보내세요",
+      "colors": { "bg": "#fff3e8", "ink": "#3a2420", "sub": "#9a5a4a", "accent": "#b83b3b", "line": "#d99a8a" } },
+    { "id": "lent",     "name": "사순절",   "title": "사순절을 지나며",
+      "colors": { "bg": "#efe9f5", "ink": "#3a2a52", "sub": "#7a62a3", "accent": "#6b4c9a", "line": "#b6a3d4" } },
+    { "id": "holyweek", "name": "고난주간", "title": "고난주간을 보내며",
+      "colors": { "bg": "#2e1f3a", "ink": "#efe6f3", "sub": "#c9a3d9", "accent": "#c9a3d9", "line": "#c9a3d9" } },
+    { "id": "easter",   "name": "부활절",   "title": "부활을 축하합니다",
+      "colors": { "bg": "#f7f2fb", "ink": "#3f2d5c", "sub": "#6b4c9a", "accent": "#8e6bbf", "line": "#c4acdf" } },
+    { "id": "parents",  "name": "어버이주일", "title": "어버이주일에",
+      "colors": { "bg": "#fdeff0", "ink": "#4a2c2c", "sub": "#9a5a64", "accent": "#c8485f", "line": "#e3a3ad" } },
+    { "id": "barley",   "name": "맥추감사절", "title": "맥추감사절을 맞아",
+      "colors": { "bg": "#faf3dc", "ink": "#3d3118", "sub": "#8a6d2a", "accent": "#b8892b", "line": "#dcc080" } },
+    { "id": "chuseok",  "name": "추석",     "title": "풍성한 한가위 되세요",
+      "colors": { "bg": "#1c2745", "ink": "#f6efd8", "sub": "#f0cf7a", "accent": "#f0cf7a", "line": "#f0cf7a" } },
+    { "id": "thanks",   "name": "추수감사절", "title": "추수감사절을 맞아",
+      "colors": { "bg": "#fbefdc", "ink": "#40251a", "sub": "#94603a", "accent": "#c4622d", "line": "#e0b48a" } },
+    { "id": "advent",   "name": "대림절",   "title": "대림절을 기다리며",
+      "colors": { "bg": "#e9ecf6", "ink": "#232c52", "sub": "#4b5aa3", "accent": "#4b5aa3", "line": "#aab4dc" } },
+    { "id": "christmas","name": "성탄절",   "title": "메리 크리스마스",
+      "colors": { "bg": "#1f3d33", "ink": "#f6efdc", "sub": "#e0b866", "accent": "#e0b866", "line": "#e0b866" } }
+  ],
+  "palettes": [
+    { "id": "cream",    "name": "크림",     "bg": "#faf3e3", "ink": "#3b2f24", "sub": "#8a6a4c", "accent": "#b5835a", "line": "#c9a37c" },
+    { "id": "paper",    "name": "미색",     "bg": "#f1ebdc", "ink": "#2d2a26", "sub": "#6b5547", "accent": "#8a5a44", "line": "#8a5a44" },
+    { "id": "sky",      "name": "하늘",     "bg": "#e6f1f8", "ink": "#1f3a52", "sub": "#4a7ba1", "accent": "#5b92b8", "line": "#5b92b8" },
+    { "id": "pink",     "name": "연분홍",   "bg": "#fbeeee", "ink": "#4a2c2c", "sub": "#9a6a6a", "accent": "#c98a8a", "line": "#c98a8a" },
+    { "id": "sage",     "name": "연두",     "bg": "#eef2e4", "ink": "#2f3a28", "sub": "#66775a", "accent": "#8aa076", "line": "#8aa076" },
+    { "id": "lavender", "name": "라벤더",   "bg": "#f1ecf7", "ink": "#3f2d5c", "sub": "#6b4c9a", "accent": "#8e72bd", "line": "#8e72bd" },
+    { "id": "navy",     "name": "네이비",   "bg": "#14213d", "ink": "#f4efe3", "sub": "#d9b26f", "accent": "#d9b26f", "line": "#d9b26f" },
+    { "id": "green",    "name": "짙은 초록", "bg": "#1f3d33", "ink": "#f6efdc", "sub": "#e0b866", "accent": "#e0b866", "line": "#e0b866" },
+    { "id": "wine",     "name": "와인",     "bg": "#4a1f2a", "ink": "#f6e9e4", "sub": "#e3b8a8", "accent": "#e3b8a8", "line": "#e3b8a8" },
+    { "id": "charcoal", "name": "차콜",     "bg": "#26262a", "ink": "#f0efec", "sub": "#bdbab2", "accent": "#c9a37c", "line": "#c9a37c" }
+  ]
+}

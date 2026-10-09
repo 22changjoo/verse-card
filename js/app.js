@@ -1,0 +1,725 @@
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // 값이 바뀌면 미리보기를 다시 그리는 입력칸
+  var inputIds = ['seasonTitle', 'recipient', 'honorific', 'honorificCustom', 'recipient2', 'honorific2',
+    'honorific2Custom', 'greeting', 'verse', 'ref', 'version', 'sender'];
+  var HONORIFICS = ['님', '성도님', '집사님', '권사님', '장로님', '목사님', '사모님'];
+  var CUSTOM = '__custom';
+  var STEP_MIN = -4;
+  var STEP_MAX = 4;
+
+  var config = null;
+  var greetings = null;
+  // splitOn: 긴 말씀을 절 단위로 여러 장으로 나누는 중 / page: 미리보기 중인 장(0부터) / showNo: "1/3" 표시
+  var state = { type: 'visit', splitOn: false, page: 0, showNo: true };
+  var design = { template: 'cream', size: 'square', season: null, palette: null, font: null, deco: true, step: 0, logoOn: false };
+
+  var previewEl = document.querySelector('.preview');
+  var previewFrame = $('previewFrame');
+  var previewScale = $('previewScale');
+
+  function byId(list, id) {
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  // ── 입력 / 디자인 데이터 ──
+  function honorificOf(selectId, customId) {
+    var v = $(selectId).value;
+    return v === CUSTOM ? $(customId).value.trim() : v;
+  }
+
+  function readData() {
+    return {
+      seasonTitle: state.type === 'season' ? $('seasonTitle').value : '',
+      recipient: $('recipient').value,
+      honorific: honorificOf('honorific', 'honorificCustom'),
+      recipient2: $('recipient2').value,
+      honorific2: honorificOf('honorific2', 'honorific2Custom'),
+      greeting: $('greeting').value,
+      verse: $('verse').value,
+      ref: $('ref').value,
+      version: $('version').value,
+      sender: $('sender').value
+    };
+  }
+
+  // 입력이 비어 있을 때 미리보기에 보여줄 안내 문구
+  function withPlaceholders(data) {
+    var d = Object.assign({}, data);
+    if (!d.verse.trim()) d.verse = '말씀 본문을 입력하면\n이곳에 표시됩니다.';
+    return d;
+  }
+
+  function currentLogo() { return VerseStore.get('logo', null); }
+
+  function buildDesign() {
+    return {
+      template: design.template,
+      size: design.size,
+      season: design.season,
+      palette: design.palette,
+      font: design.font,
+      deco: design.deco,
+      step: design.step,
+      logo: design.logoOn ? currentLogo() : null
+    };
+  }
+
+  function saveDesign() { VerseStore.set('design', design); }
+
+  // ── 미리보기 ──
+  function fitScale() {
+    var size = VerseCard.sizeOf(design);
+    var maxW = Math.min(previewEl.clientWidth - 32, 420);
+    var maxH = Math.max(220, window.innerHeight * 0.4);
+    var scale = Math.min(maxW / size.w, maxH / size.h);
+    previewFrame.style.width = Math.round(size.w * scale) + 'px';
+    previewFrame.style.height = Math.round(size.h * scale) + 'px';
+    previewScale.style.width = size.w + 'px';
+    previewScale.style.height = size.h + 'px';
+    previewScale.style.transform = 'scale(' + scale + ')';
+  }
+
+  // 지금 만들 카드의 장별 데이터. 나누기를 켰으면 절 단위로 나눈 여러 장, 아니면 한 장.
+  function buildPages(design2) {
+    var data = readData();
+    if (state.splitOn && data.verse.trim()) return VerseSplit.split(data, design2 || buildDesign(), state.showNo);
+    return [data];
+  }
+
+  // ── 최근 받는 분 (이 기기에만 저장, 카드를 실제로 만들었을 때 기록) ──
+  var RECENT_MAX = 10;
+
+  function loadRecent() {
+    var r = VerseStore.get('recent', []);
+    return Array.isArray(r) ? r.filter(function (x) { return x && typeof x.name === 'string' && x.name; }) : [];
+  }
+
+  function renderRecent() {
+    var list = loadRecent();
+    var dl = $('recentNames');
+    dl.replaceChildren();
+    list.forEach(function (r) {
+      var o = document.createElement('option');
+      o.value = r.name;
+      dl.appendChild(o);
+    });
+    $('recentSummary').textContent = '최근 받는 분 ' + list.length + '명';
+    $('clearRecent').disabled = list.length === 0;
+  }
+
+  function rememberRecipients(data) {
+    var list = loadRecent();
+    // 두 번째 분을 먼저 넣어서, 첫 번째 분이 맨 앞에 오게 한다.
+    [[data.recipient2, data.honorific2], [data.recipient, data.honorific]].forEach(function (p) {
+      var name = (p[0] || '').trim();
+      if (!name) return;
+      list = list.filter(function (x) { return x.name !== name; });
+      list.unshift({ name: name, honorific: p[1] || '' });
+    });
+    VerseStore.set('recent', list.slice(0, RECENT_MAX));
+    renderRecent();
+  }
+
+  // 자동완성으로 이름을 고르면 지난번 호칭도 함께 채운다.
+  function applyRecentHonorific(nameId, selectId, customId) {
+    var name = $(nameId).value.trim();
+    var found = loadRecent().filter(function (r) { return r.name === name; })[0];
+    if (!found || !found.honorific) return;
+    var sel = $(selectId), custom = $(customId);
+    if (HONORIFICS.indexOf(found.honorific) >= 0) {
+      sel.value = found.honorific;
+      custom.hidden = true;
+    } else {
+      sel.value = CUSTOM;
+      custom.hidden = false;
+      custom.value = found.honorific;
+    }
+    render();
+  }
+
+  function render() {
+    var data = readData();
+    var d = buildDesign();
+    var splitting = state.splitOn && data.verse.trim();
+    var pages = splitting ? VerseSplit.split(data, d, state.showNo) : [withPlaceholders(data)];
+    state.page = Math.max(0, Math.min(state.page, pages.length - 1));
+
+    var card = VerseCard.renderCard(pages[state.page], d);
+    previewScale.replaceChildren(card);
+    var fit = VerseCard.fitCard(card);
+    fitScale();
+    updateStepLabel();
+    updateSplitUi(data, fit, pages);
+    prewarm();
+    return fit;
+  }
+
+  // 긴 말씀 나누기 안내·버튼, 장 이동
+  function updateSplitUi(data, fit, pages) {
+    var us = VerseSplit.units(data.verse);
+    if (state.splitOn && us.length < 2) state.splitOn = false;
+
+    var box = $('splitBox'), msg = $('splitMsg');
+    var on = state.splitOn;
+    $('splitOn').hidden = on || us.length < 2;
+    $('splitOn').classList.toggle('primary-chip', !on && fit.overflow);
+    $('splitOff').hidden = !on;
+    $('pageNoWrap').hidden = !(on && pages.length > 1);
+
+    if (on) {
+      box.hidden = false;
+      msg.textContent = pages.length > 1
+        ? pages.length + '장으로 나누었습니다. 출처는 마지막 장에 표시됩니다.'
+        : '한 장에 모두 들어가서 나누지 않았습니다.';
+    } else if (fit.overflow) {
+      box.hidden = false;
+      msg.textContent = us.length >= 2
+        ? '말씀이 길어 글자를 가장 작게 해도 다 들어가지 않습니다. 절 단위로 나누어 여러 장으로 만들 수 있어요.'
+        : '말씀이 길어 일부가 잘립니다. 절마다 줄을 바꾸거나 절 번호(1 2 3)를 넣으면 나눌 수 있어요.';
+    } else if (us.length >= 3) {
+      box.hidden = false;
+      msg.textContent = '원하면 절 단위로 여러 장으로 나눌 수 있어요.';
+    } else {
+      box.hidden = true;
+    }
+
+    var pager = $('pager');
+    pager.hidden = pages.length < 2;
+    $('pageLabel').textContent = (state.page + 1) + ' / ' + pages.length;
+    $('pagePrev').disabled = state.page <= 0;
+    $('pageNext').disabled = state.page >= pages.length - 1;
+  }
+
+  // ── 라이브러리에서 선택 ──
+  var libReady = null;
+  var libTheme = '';
+
+  function renderLibList() {
+    var ul = $('libList');
+    ul.replaceChildren();
+    var all = VerseLibrary.list().filter(function (v) { return v.text.trim(); });
+    var items = all.filter(function (v) { return !libTheme || v.theme.indexOf(libTheme) >= 0; });
+
+    if (!all.length) {
+      var li = document.createElement('li');
+      li.className = 'sheet-empty';
+      li.innerHTML = '아직 본문이 입력된 말씀이 없습니다. <a href="library.html">말씀 라이브러리</a>에서 본문을 입력하면 여기에 나타납니다.';
+      ul.appendChild(li);
+      return;
+    }
+    if (!items.length) {
+      var e = document.createElement('li');
+      e.className = 'sheet-empty';
+      e.textContent = '이 주제에 입력된 말씀이 없습니다.';
+      ul.appendChild(e);
+      return;
+    }
+    items.forEach(function (v) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sheet-item';
+      var r = document.createElement('div'); r.className = 'r'; r.textContent = v.ref;
+      var t = document.createElement('div'); t.className = 't'; t.textContent = v.text;
+      b.appendChild(r); b.appendChild(t);
+      b.addEventListener('click', function () {
+        $('verse').value = v.text;
+        $('ref').value = v.ref;
+        state.splitOn = false;
+        state.page = 0;
+        $('libDialog').close();
+        render();
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+
+  function buildLibThemes() {
+    var box = $('libThemes');
+    var mk = function (value, label) {
+      var b = makeChip(value, label);
+      b.setAttribute('aria-pressed', String(value === libTheme));
+      return b;
+    };
+    box.replaceChildren(mk('', '전체'));
+    VerseLibrary.THEMES.forEach(function (t) { box.appendChild(mk(t, t)); });
+  }
+
+  function openLibrary() {
+    var dlg = $('libDialog');
+    if (typeof dlg.showModal !== 'function') { location.href = 'library.html'; return; }
+    if (!libReady) libReady = VerseLibrary.load();
+    libReady.then(function () {
+      buildLibThemes();
+      renderLibList();
+      dlg.showModal();
+    }).catch(function () { toast('말씀 목록을 불러오지 못했습니다.'); });
+  }
+
+  var renderQueued = false;
+  function renderSoon() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(function () { renderQueued = false; render(); });
+  }
+
+  // ── 호칭 / 상황 / 절기 ──
+  function fillHonorifics(select, defaultValue) {
+    HONORIFICS.forEach(function (h) {
+      var o = document.createElement('option');
+      o.value = h; o.textContent = h;
+      select.appendChild(o);
+    });
+    var c = document.createElement('option');
+    c.value = CUSTOM; c.textContent = '직접 입력';
+    select.appendChild(c);
+    select.value = defaultValue;
+  }
+
+  function bindCustomHonorific(selectId, customId) {
+    var sel = $(selectId), custom = $(customId);
+    function sync() {
+      var on = sel.value === CUSTOM;
+      custom.hidden = !on;
+      if (on) custom.focus();
+    }
+    sel.addEventListener('change', sync);
+  }
+
+  function fillSelect(select, items) {
+    items.forEach(function (it) {
+      var o = document.createElement('option');
+      o.value = it.id; o.textContent = it.name;
+      select.appendChild(o);
+    });
+  }
+
+  // 인사말 예시: 눌러서 인사말 칸에 넣는다(이후 자유롭게 수정).
+  function showSuggestions(list) {
+    var box = $('greetingSuggest'), wrap = $('greetingSuggestList');
+    wrap.replaceChildren();
+    if (!list || !list.length) { box.hidden = true; return; }
+    list.forEach(function (text) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'suggest-item';
+      b.textContent = text;
+      b.addEventListener('click', function () {
+        $('greeting').value = text;
+        render();
+      });
+      wrap.appendChild(b);
+    });
+    box.hidden = false;
+  }
+
+  function refreshSuggestions() {
+    if (state.type === 'visit') {
+      var s = byId(greetings.situations, $('situation').value);
+      showSuggestions(s ? s.items : null);
+    } else {
+      showSuggestions(design.season ? greetings.seasons[design.season] : null);
+    }
+  }
+
+  function applySeason(id) {
+    var season = byId(config.seasons, id);
+    design.season = season ? season.id : null;
+    if (season) {
+      design.template = 'season';   // 절기 템플릿 자동 적용
+      design.palette = null;        // 절기 고유 색을 쓰도록 배경색 선택 해제
+      $('seasonTitle').value = season.title;
+    } else if (design.template === 'season') {
+      design.template = 'cream';
+    }
+    $('season').value = design.season || '';
+    syncControls(); saveDesign(); refreshSuggestions(); render();
+  }
+
+  function setType(type) {
+    state.type = type;
+    VerseStore.set('type', type);
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-selected', String(b.dataset.type === type));
+    });
+    document.querySelectorAll('[data-only]').forEach(function (n) {
+      n.hidden = n.dataset.only !== type;
+    });
+    // 절기 카드는 수신자 이름이 선택 항목
+    $('recipientLabel').textContent = type === 'visit' ? '받는 분 이름' : '받는 분 이름 (선택)';
+    // 절기 맞춤 템플릿은 절기 카드에서만 쓴다.
+    if (type === 'visit' && design.template === 'season') design.template = 'cream';
+    if (type === 'season' && design.season && design.template !== 'season' && !design.userPickedTemplate) {
+      design.template = 'season';
+    }
+    syncControls(); saveDesign(); refreshSuggestions(); render();
+  }
+
+  // ── 디자인 컨트롤 ──
+  function setPressed(container, value) {
+    container.querySelectorAll('[data-value]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    });
+  }
+
+  function makeChip(value, label, extra) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.dataset.value = value;
+    b.setAttribute('aria-pressed', 'false');
+    if (extra) b.appendChild(extra);
+    b.appendChild(document.createTextNode(label));
+    return b;
+  }
+
+  function dot(color) {
+    var s = document.createElement('span');
+    s.className = 'dot';
+    s.style.background = color;
+    return s;
+  }
+
+  function buildControls() {
+    var tplBox = $('tplChips');
+    config.templates.forEach(function (t) {
+      var chip = makeChip(t.id, t.name, dot(t.colors.bg));
+      if (t.seasonOnly) chip.dataset.only = 'season';
+      tplBox.appendChild(chip);
+    });
+    tplBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.template = b.dataset.value;
+      design.userPickedTemplate = true;
+      syncControls(); saveDesign(); render();
+    });
+
+    var sizeBox = $('sizeChips');
+    config.sizes.forEach(function (s) {
+      var b = makeChip(s.id, s.name);
+      var small = document.createElement('small');
+      small.textContent = s.note;
+      b.appendChild(small);
+      sizeBox.appendChild(b);
+    });
+    sizeBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.size = b.dataset.value;
+      syncControls(); saveDesign(); render();
+    });
+
+    var palBox = $('paletteSwatches');
+    var def = document.createElement('button');
+    def.type = 'button';
+    def.className = 'swatch default';
+    def.dataset.value = '';
+    def.textContent = '기본';
+    def.setAttribute('aria-label', '템플릿 기본색');
+    def.setAttribute('aria-pressed', 'true');
+    palBox.appendChild(def);
+    config.palettes.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.dataset.value = p.id;
+      b.style.background = p.bg;
+      b.setAttribute('aria-label', p.name);
+      b.setAttribute('aria-pressed', 'false');
+      palBox.appendChild(b);
+    });
+    palBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.palette = b.dataset.value || null;
+      syncControls(); saveDesign(); render();
+    });
+
+    var fontBox = $('fontChips');
+    fontBox.appendChild(makeChip('', '템플릿 기본'));
+    config.fonts.forEach(function (f) {
+      var b = makeChip(f.id, f.name);
+      b.style.fontFamily = f.family;
+      fontBox.appendChild(b);
+    });
+    fontBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.font = b.dataset.value || null;
+      syncControls(); saveDesign(); render();
+    });
+
+    $('stepDown').addEventListener('click', function () { design.step = Math.max(STEP_MIN, design.step - 1); saveDesign(); render(); });
+    $('stepUp').addEventListener('click', function () { design.step = Math.min(STEP_MAX, design.step + 1); saveDesign(); render(); });
+
+    $('decoToggle').addEventListener('change', function () { design.deco = this.checked; saveDesign(); render(); });
+    $('logoToggle').addEventListener('change', function () { design.logoOn = this.checked; saveDesign(); render(); });
+    $('logoFile').addEventListener('change', onLogoPicked);
+    $('logoClear').addEventListener('click', function () {
+      VerseStore.remove('logo');
+      design.logoOn = false;
+      syncControls(); saveDesign(); render();
+    });
+  }
+
+  function updateStepLabel() {
+    var s = design.step;
+    $('stepLabel').textContent = s === 0 ? '자동 맞춤' : (s > 0 ? '+' + s : String(s));
+    $('stepDown').disabled = design.step <= STEP_MIN;
+    $('stepUp').disabled = design.step >= STEP_MAX;
+  }
+
+  function syncControls() {
+    setPressed($('tplChips'), design.template);
+    setPressed($('sizeChips'), design.size);
+    setPressed($('paletteSwatches'), design.palette || '');
+    setPressed($('fontChips'), design.font || '');
+    $('tplChips').querySelectorAll('[data-only]').forEach(function (c) { c.hidden = c.dataset.only !== state.type; });
+    $('decoToggle').checked = design.deco;
+    var hasLogo = !!currentLogo();
+    $('logoToggle').disabled = !hasLogo;
+    $('logoToggle').checked = hasLogo && design.logoOn;
+    $('logoClear').hidden = !hasLogo;
+    updateStepLabel();
+  }
+
+  // 로고: 작게 줄여서 이 기기에만 저장한다.
+  function onLogoPicked() {
+    var file = this.files && this.files[0];
+    this.value = '';
+    if (!file) return;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      var maxW = 560, maxH = 144;
+      var ratio = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * ratio));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * ratio));
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      var ok = VerseStore.set('logo', canvas.toDataURL('image/png'));
+      if (!ok) { toast('로고를 저장하지 못했습니다. 더 작은 이미지를 사용해 주세요.'); return; }
+      design.logoOn = true;
+      syncControls(); saveDesign(); render();
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      toast('이미지를 열 수 없습니다.');
+    };
+    img.src = url;
+  }
+
+  // ── 내보내기 ──
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 3500);
+  }
+
+  // 입력이 멈추면 이미지를 미리 만들어 둔다. (공유 시트가 터치 직후 바로 열리도록)
+  var prewarmTimer = null;
+  function prewarm() {
+    clearTimeout(prewarmTimer);
+    prewarmTimer = setTimeout(function () {
+      var data = readData();
+      if (!data.verse.trim()) return;
+      VerseExport.getBlobs(buildPages(), buildDesign()).catch(function () {});
+    }, 700);
+  }
+
+  async function runExport(kind) {
+    var data = readData();
+    if (!data.verse.trim()) { toast('말씀 본문을 먼저 입력해 주세요.'); return; }
+    var buttons = [$('btnSave'), $('btnShare'), $('btnPrint')];
+    buttons.forEach(function (b) { b.disabled = true; });
+    try {
+      var pages = buildPages();
+      if (kind === 'save') {
+        await VerseExport.save(pages, buildDesign(), data);
+        rememberRecipients(data);
+        toast(pages.length > 1 ? pages.length + '장을 저장했습니다.' : '이미지를 저장했습니다.');
+      } else {
+        var result = await VerseExport.share(pages, buildDesign(), data);
+        if (result === 'unsupported') {
+          toast('이 브라우저는 공유를 지원하지 않습니다. "이미지 저장"을 이용해 주세요.');
+        } else if (result === 'shared') {
+          rememberRecipients(data);
+          toast('공유했습니다.');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast('이미지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      buttons.forEach(function (b) { b.disabled = false; });
+    }
+  }
+
+  // ── 인쇄 (엽서 100×148mm) ──
+  function openPrint() {
+    if (!readData().verse.trim()) { toast('말씀 본문을 먼저 입력해 주세요.'); return; }
+    var dlg = $('printDialog');
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+  }
+
+  async function runPrint() {
+    var data = readData();
+    var layout = document.querySelector('input[name="printLayout"]:checked').value;
+    $('printDialog').close();
+    // 인쇄는 선택한 크기와 관계없이 항상 엽서 크기로 다시 만든다(긴 말씀 분할도 엽서 기준으로 다시 계산).
+    var post = Object.assign(buildDesign(), { size: 'postcard' });
+    toast('인쇄용 이미지를 만드는 중입니다…');
+    try {
+      var blobs = await VerseExport.getBlobs(buildPages(post), post);
+      rememberRecipients(data);
+      $('toast').hidden = true;
+      await VersePrint.run(blobs, layout);
+    } catch (err) {
+      console.error(err);
+      toast('인쇄 준비에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  }
+
+  function bindEvents() {
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.addEventListener('click', function () { setType(b.dataset.type); });
+    });
+
+    $('btnPrint').addEventListener('click', openPrint);
+    $('printClose').addEventListener('click', function () { $('printDialog').close(); });
+    $('printGo').addEventListener('click', runPrint);
+
+    // 저장된 정보 지우기
+    $('clearRecent').addEventListener('click', function () {
+      if (!confirm('최근 받는 분 기록을 모두 지울까요?')) return;
+      VerseStore.remove('recent');
+      renderRecent();
+      toast('기록을 지웠습니다.');
+    });
+    $('clearAll').addEventListener('click', function () {
+      if (!confirm('저장된 설정, 로고, 보낸 이 기본값, 최근 받는 분 기록과 말씀 라이브러리(입력한 본문)를 모두 지웁니다.\n라이브러리는 먼저 "파일로 내보내기"로 백업해 두는 것이 좋습니다.\n\n계속할까요?')) return;
+      VerseStore.clearAll();
+      location.reload();
+    });
+
+    // 이름 자동완성(최근 받는 분) → 호칭도 함께 채움
+    ['recipient:honorific:honorificCustom', 'recipient2:honorific2:honorific2Custom'].forEach(function (spec) {
+      var ids = spec.split(':');
+      $(ids[0]).addEventListener('input', function (e) {
+        if (!e.inputType || e.inputType === 'insertReplacementText') applyRecentHonorific(ids[0], ids[1], ids[2]);
+      });
+      $(ids[0]).addEventListener('change', function () { applyRecentHonorific(ids[0], ids[1], ids[2]); });
+    });
+
+    // 긴 말씀 나누기 / 장 이동 / 라이브러리
+    $('splitOn').addEventListener('click', function () { state.splitOn = true; state.page = 0; render(); });
+    $('splitOff').addEventListener('click', function () { state.splitOn = false; state.page = 0; render(); });
+    $('pageNoToggle').addEventListener('change', function () { state.showNo = this.checked; render(); });
+    $('pagePrev').addEventListener('click', function () { state.page -= 1; render(); });
+    $('pageNext').addEventListener('click', function () { state.page += 1; render(); });
+    $('openLibrary').addEventListener('click', openLibrary);
+    $('libClose').addEventListener('click', function () { $('libDialog').close(); });
+    $('libThemes').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      libTheme = b.dataset.value;
+      buildLibThemes();
+      renderLibList();
+    });
+
+    $('situation').addEventListener('change', refreshSuggestions);
+    $('season').addEventListener('change', function () { applySeason(this.value); });
+
+    bindCustomHonorific('honorific', 'honorificCustom');
+    bindCustomHonorific('honorific2', 'honorific2Custom');
+
+    // 함께 받는 분(배우자 등) 추가/제거
+    $('toggleRecipient2').addEventListener('click', function () {
+      var field = $('recipient2Field');
+      var open = field.hidden;
+      field.hidden = !open;
+      this.textContent = open ? '− 함께 받는 분 빼기' : '+ 함께 받는 분 추가';
+      this.setAttribute('aria-expanded', String(open));
+      if (open) { $('recipient2').focus(); } else { $('recipient2').value = ''; }
+      render();
+    });
+
+    inputIds.forEach(function (id) {
+      $(id).addEventListener('input', render);
+      $(id).addEventListener('change', render);
+    });
+    // 보낸 이는 기본값으로 기억한다.
+    $('sender').addEventListener('input', function () { VerseStore.set('sender', this.value); });
+
+    $('btnSave').addEventListener('click', function () { runExport('save'); });
+    $('btnShare').addEventListener('click', function () { runExport('share'); });
+
+    window.addEventListener('resize', fitScale);
+
+    // 글꼴이 늦게 로드되면 줄바꿈이 달라지므로 다시 그린다.
+    if (document.fonts) {
+      document.fonts.addEventListener('loadingdone', renderSoon);
+      if (document.fonts.ready) document.fonts.ready.then(renderSoon);
+    }
+  }
+
+  function restore() {
+    var saved = VerseStore.get('design', null);
+    if (saved) {
+      if (config.templates.some(function (t) { return t.id === saved.template; })) design.template = saved.template;
+      if (config.sizes.some(function (s) { return s.id === saved.size; })) design.size = saved.size;
+      if (saved.season && config.seasons.some(function (s) { return s.id === saved.season; })) design.season = saved.season;
+      if (saved.palette && config.palettes.some(function (p) { return p.id === saved.palette; })) design.palette = saved.palette;
+      if (saved.font && config.fonts.some(function (f) { return f.id === saved.font; })) design.font = saved.font;
+      design.deco = saved.deco !== false;
+      design.step = Math.max(STEP_MIN, Math.min(STEP_MAX, parseInt(saved.step, 10) || 0));
+      design.logoOn = !!saved.logoOn && !!currentLogo();
+    }
+    var sender = VerseStore.get('sender', '');
+    if (sender) $('sender').value = sender;
+    var type = VerseStore.get('type', 'visit');
+    state.type = type === 'season' ? 'season' : 'visit';
+  }
+
+  function init(cfgs) {
+    config = cfgs[0];
+    greetings = cfgs[1];
+    VerseCard.setConfig(config);
+
+    fillHonorifics($('honorific'), '집사님');
+    fillHonorifics($('honorific2'), '권사님');
+    fillSelect($('situation'), greetings.situations);
+    fillSelect($('season'), config.seasons);
+
+    restore();
+    buildControls();
+    bindEvents();
+    renderRecent();
+
+    $('season').value = design.season || '';
+    if (state.type === 'season' && design.season) $('seasonTitle').value = byId(config.seasons, design.season).title;
+    setType(state.type);
+  }
+
+  function loadJson(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); });
+  }
+
+  Promise.all([loadJson('data/templates.json'), loadJson('data/greetings.json')])
+    .then(init)
+    .catch(function (err) {
+      console.error(err);
+      toast('설정 파일을 불러오지 못했습니다. 로컬 서버로 열어 주세요.');
+    });
+})();

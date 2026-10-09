@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf3e3">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<title>말씀 라이브러리</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/library.css">
+</head>
+<body class="library-page">
+<header class="topbar">
+  <a class="back" href="index.html">← 카드 만들기</a>
+  <h1>말씀 라이브러리</h1>
+  <p class="notice">
+    이 앱은 성경 본문을 제공하지 않습니다. 사용하실 본문을 직접 입력해 주세요.
+    개역개정·새번역은 대한성서공회 저작물이므로 사용 범위를 확인해 주세요.
+    입력한 내용은 <strong>이 기기에만</strong> 저장되고 어디로도 전송되지 않습니다.
+  </p>
+</header>
+
+<main class="lib">
+  <div class="lib-tools">
+    <div class="chips" id="themeChips" role="group" aria-label="주제 필터"></div>
+    <label class="check"><input type="checkbox" id="filledOnly"> 본문이 입력된 것만 보기</label>
+    <p class="hint" id="summary" aria-live="polite"></p>
+  </div>
+
+  <ul class="verse-list" id="verseList"></ul>
+
+  <details class="add-box" id="addBox">
+    <summary>+ 목록에 없는 말씀 직접 추가</summary>
+    <div class="add-form">
+      <div class="field">
+        <label for="addRef">장절</label>
+        <input id="addRef" type="text" autocomplete="off" placeholder="예: 시편 121:1-2">
+      </div>
+      <div class="field">
+        <span class="label">주제 (여러 개 선택 가능)</span>
+        <div class="chips" id="addThemes" role="group" aria-label="주제"></div>
+      </div>
+      <div class="field">
+        <label for="addText">본문</label>
+        <textarea id="addText" rows="4" placeholder="절마다 줄을 바꿔 입력하면 긴 말씀을 절 단위로 나눌 수 있습니다."></textarea>
+      </div>
+      <button type="button" class="btn primary" id="addBtn">추가하기</button>
+    </div>
+  </details>
+
+  <section class="backup">
+    <h2 class="section-title">백업 · 옮기기</h2>
+    <p class="hint">휴대폰과 Mac 사이에 라이브러리를 옮길 때 사용합니다. 내보낸 파일을 다른 기기에서 가져오세요.</p>
+    <div class="backup-btns">
+      <button type="button" class="btn" id="exportBtn">파일로 내보내기</button>
+      <label class="btn file-btn">파일에서 가져오기<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/storage.js"></script>
+<script src="js/library.js"></script>
+<script src="js/library-page.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
