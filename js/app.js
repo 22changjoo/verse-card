@@ -195,28 +195,9 @@
     });
     $('recentSummary').textContent = '최근 받는 분 ' + list.length + '명';
     $('clearRecent').disabled = list.length === 0;
-    renderHomeRecent(list);
   }
 
   // 홈 화면의 "최근 받는 분": 누르면 이름과 호칭이 채워진 채로 내용 입력 단계로 간다.
-  function renderHomeRecent(list) {
-    var box = $('homeRecent');
-    box.replaceChildren();
-    list.forEach(function (r) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'pill person';
-      b.dataset.name = r.name;
-      var av = document.createElement('span');
-      av.className = 'avatar';
-      av.textContent = r.name.charAt(0);
-      b.appendChild(av);
-      b.appendChild(document.createTextNode(r.name + (r.honorific ? ' ' + r.honorific : '')));
-      box.appendChild(b);
-    });
-    $('homeRecentEmpty').hidden = list.length > 0;
-  }
-
   function rememberRecipients(data) {
     var list = loadRecent();
     // 두 번째 분을 먼저 넣어서, 첫 번째 분이 맨 앞에 오게 한다.
@@ -265,8 +246,11 @@
     box.replaceChildren();
     var list = VerseHistory.list().slice(0, 3);
     list.forEach(function (e) {
-      var row = document.createElement('div');
+      var row = document.createElement('button');
+      row.type = 'button';
       row.className = 'history-row';
+      row.dataset.hid = e.id;
+      row.setAttribute('aria-label', VerseHistory.recipientsText(e) + '께 다시 보내기');
       var main = document.createElement('div');
       main.className = 'history-main';
       var who = document.createElement('div');
@@ -283,6 +267,31 @@
       box.appendChild(row);
     });
     $('homeHistoryEmpty').hidden = list.length > 0;
+  }
+
+  function fillRecipient(nameId, selectId, customId, name, honorific) {
+    $(nameId).value = name || '';
+    var sel = $(selectId), custom = $(customId);
+    if (!honorific) return;
+    if (HONORIFICS.indexOf(honorific) >= 0) { sel.value = honorific; custom.hidden = true; }
+    else { sel.value = CUSTOM; custom.hidden = false; custom.value = honorific; }
+  }
+
+  // 보낸 기록에서 같은 분(들)께 다시 시작: 받는 분·직분·카드 유형을 채운다.
+  function startFromHistory(entry) {
+    setType(entry.type === 'season' ? 'season' : 'visit');
+    var rs = entry.recipients || [];
+    fillRecipient('recipient', 'honorific', 'honorificCustom', rs[0] && rs[0].name, rs[0] && rs[0].honorific);
+    var field = $('recipient2Field');
+    if (rs[1]) {
+      fillRecipient('recipient2', 'honorific2', 'honorific2Custom', rs[1].name, rs[1].honorific);
+      if (field.hidden) $('toggleRecipient2').click();
+    } else if (!field.hidden) {
+      $('toggleRecipient2').click();
+    }
+    render();
+    ui.step = 1;
+    setView('create');
   }
 
   // 같은 분께 같은 말씀을 이미 보냈다면 알려 준다.
@@ -998,13 +1007,11 @@
       if (fav) applyFavorite(fav);
     });
     document.querySelectorAll('.fav-save').forEach(function (b) { b.addEventListener('click', saveFavorite); });
-    $('homeRecent').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-name]');
+    $('homeHistory').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hid]');
       if (!b) return;
-      $('recipient').value = b.dataset.name;
-      applyRecentHonorific('recipient', 'honorific', 'honorificCustom');
-      ui.step = 1;
-      setView('create');
+      var entry = VerseHistory.list().filter(function (x) { return x.id === b.dataset.hid; })[0];
+      if (entry) startFromHistory(entry);
     });
     $('brandHome').addEventListener('click', function () { setView('home'); });
 
