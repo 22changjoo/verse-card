@@ -5,7 +5,11 @@
 
   // 값이 바뀌면 미리보기를 다시 그리는 입력칸
   var inputIds = ['seasonTitle', 'recipient', 'honorific', 'honorificCustom', 'recipient2', 'honorific2',
-    'honorific2Custom', 'greeting', 'verse', 'ref', 'version', 'sender'];
+    'honorific2Custom', 'greeting', 'verse', 'ref', 'version', 'sender', 'closing', 'closingCustom'];
+  // 로고 크기 비율 / 로고 색 선택지
+  var LOGO_SCALE = { s: 0.75, m: 1, l: 1.35 };
+  var LOGO_SIZES = [['s', '작게'], ['m', '보통'], ['l', '크게']];
+  var LOGO_COLORS = [['auto', '테마에 맞춤'], ['original', '원본 색'], ['white', '흰색'], ['black', '검정']];
   var HONORIFICS = ['님', '성도님', '집사님', '권사님', '장로님', '목사님', '사모님'];
   var CUSTOM = '__custom';
   var STEP_MIN = -4;
@@ -15,7 +19,9 @@
   var greetings = null;
   // splitOn: 긴 말씀을 절 단위로 여러 장으로 나누는 중 / page: 미리보기 중인 장(0부터) / showNo: "1/3" 표시
   var state = { type: 'visit', splitOn: false, page: 0, showNo: true };
-  var design = { template: 'cream', size: 'square', season: null, palette: null, font: null, deco: true, step: 0, logoOn: false };
+  var design = { template: 'cream', size: 'square', season: null, palette: null, font: null, deco: true, step: 0,
+    logoOn: false, logoColor: 'auto', logoSize: 'm' };
+  var logoMonoImg = null; // 로고 모양 마스크(색을 입히는 데 사용)
 
   var previewEl = document.querySelector('.preview');
   var previewFrame = $('previewFrame');
@@ -43,7 +49,8 @@
       verse: $('verse').value,
       ref: $('ref').value,
       version: $('version').value,
-      sender: $('sender').value
+      sender: $('sender').value,
+      closing: $('closing').value === CUSTOM ? $('closingCustom').value.trim() : $('closing').value
     };
   }
 
@@ -56,6 +63,33 @@
 
   function currentLogo() { return VerseStore.get('logo', null); }
 
+  // 카드에 넣을 로고 이미지. "테마에 맞춤"이면 로고를 카드의 보조색 한 가지 색으로 바꿔 넣는다.
+  function logoSource() {
+    if (!design.logoOn) return null;
+    var orig = currentLogo();
+    if (!orig) return null;
+    var mode = design.logoColor || 'auto';
+    if (mode === 'original' || !logoMonoImg) return orig;
+    var color = mode === 'auto' ? VerseCard.themeColors(design).sub : (mode === 'white' ? '#ffffff' : '#222222');
+    return VerseLogo.tint(logoMonoImg, color);
+  }
+
+  // 저장된 로고의 모양 마스크를 준비한다. (예전 방식으로 저장된 로고는 여기서 다듬어 다시 저장)
+  function prepareLogo() {
+    var orig = currentLogo();
+    if (!orig) { logoMonoImg = null; return Promise.resolve(); }
+    var mono = VerseStore.get('logoMono', null);
+    var ready = mono
+      ? Promise.resolve(mono)
+      : VerseLogo.fromDataUrl(orig).then(function (res) {
+          VerseStore.set('logo', res.orig);
+          VerseStore.set('logoMono', res.mono);
+          return res.mono;
+        });
+    return ready.then(VerseLogo.loadImage).then(function (img) { logoMonoImg = img; })
+      .catch(function () { logoMonoImg = null; });
+  }
+
   function buildDesign() {
     return {
       template: design.template,
@@ -65,7 +99,8 @@
       font: design.font,
       deco: design.deco,
       step: design.step,
-      logo: design.logoOn ? currentLogo() : null
+      logo: logoSource(),
+      logoScale: LOGO_SCALE[design.logoSize] || 1
     };
   }
 
@@ -464,7 +499,26 @@
     $('logoFile').addEventListener('change', onLogoPicked);
     $('logoClear').addEventListener('click', function () {
       VerseStore.remove('logo');
+      VerseStore.remove('logoMono');
+      logoMonoImg = null;
       design.logoOn = false;
+      syncControls(); saveDesign(); render();
+    });
+
+    var colorBox = $('logoColorChips');
+    LOGO_COLORS.forEach(function (c) { colorBox.appendChild(makeChip(c[0], c[1])); });
+    colorBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.logoColor = b.dataset.value;
+      syncControls(); saveDesign(); render();
+    });
+    var sizeBox2 = $('logoSizeChips');
+    LOGO_SIZES.forEach(function (s) { sizeBox2.appendChild(makeChip(s[0], s[1])); });
+    sizeBox2.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-value]');
+      if (!b) return;
+      design.logoSize = b.dataset.value;
       syncControls(); saveDesign(); render();
     });
   }
@@ -487,34 +541,31 @@
     $('logoToggle').disabled = !hasLogo;
     $('logoToggle').checked = hasLogo && design.logoOn;
     $('logoClear').hidden = !hasLogo;
+    $('logoOptions').hidden = !hasLogo;
+    setPressed($('logoColorChips'), design.logoColor || 'auto');
+    setPressed($('logoSizeChips'), design.logoSize || 'm');
     updateStepLabel();
   }
 
-  // 로고: 작게 줄여서 이 기기에만 저장한다.
+  // 로고: 바깥 여백을 자르고 크기를 줄여, 원본 색과 모양 마스크 두 가지로 이 기기에만 저장한다.
   function onLogoPicked() {
     var file = this.files && this.files[0];
     this.value = '';
     if (!file) return;
-    var url = URL.createObjectURL(file);
-    var img = new Image();
-    img.onload = function () {
-      var maxW = 560, maxH = 144;
-      var ratio = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);
-      var canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(img.naturalWidth * ratio));
-      canvas.height = Math.max(1, Math.round(img.naturalHeight * ratio));
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      var ok = VerseStore.set('logo', canvas.toDataURL('image/png'));
-      if (!ok) { toast('로고를 저장하지 못했습니다. 더 작은 이미지를 사용해 주세요.'); return; }
-      design.logoOn = true;
-      syncControls(); saveDesign(); render();
-    };
-    img.onerror = function () {
-      URL.revokeObjectURL(url);
-      toast('이미지를 열 수 없습니다.');
-    };
-    img.src = url;
+    VerseLogo.fromFile(file).then(function (res) {
+      var ok = VerseStore.set('logo', res.orig) && VerseStore.set('logoMono', res.mono);
+      if (!ok) {
+        VerseStore.remove('logo'); VerseStore.remove('logoMono');
+        toast('로고를 저장하지 못했습니다. 더 작은 이미지를 사용해 주세요.');
+        return null;
+      }
+      return VerseLogo.loadImage(res.mono).then(function (img) {
+        logoMonoImg = img;
+        design.logoOn = true;
+        design.logoColor = 'auto';
+        syncControls(); saveDesign(); render();
+      });
+    }).catch(function () { toast('이미지를 열 수 없습니다.'); });
   }
 
   // ── 내보내기 ──
@@ -661,6 +712,13 @@
     });
     // 보낸 이는 기본값으로 기억한다.
     $('sender').addEventListener('input', function () { VerseStore.set('sender', this.value); });
+    // 맺음말(드림/올림 등)도 기억하고, "직접 입력"이면 입력칸을 보여 준다.
+    bindCustomHonorific('closing', 'closingCustom');
+    ['closing', 'closingCustom'].forEach(function (id) {
+      $(id).addEventListener('change', function () {
+        VerseStore.set('closing', { v: $('closing').value, c: $('closingCustom').value });
+      });
+    });
 
     $('btnSave').addEventListener('click', function () { runExport('save'); });
     $('btnShare').addEventListener('click', function () { runExport('share'); });
@@ -685,9 +743,18 @@
       design.deco = saved.deco !== false;
       design.step = Math.max(STEP_MIN, Math.min(STEP_MAX, parseInt(saved.step, 10) || 0));
       design.logoOn = !!saved.logoOn && !!currentLogo();
+      if (LOGO_COLORS.some(function (c) { return c[0] === saved.logoColor; })) design.logoColor = saved.logoColor;
+      if (LOGO_SCALE[saved.logoSize]) design.logoSize = saved.logoSize;
     }
     var sender = VerseStore.get('sender', '');
     if (sender) $('sender').value = sender;
+    var closing = VerseStore.get('closing', null);
+    if (closing && typeof closing === 'object') {
+      var okClosing = ['드림', '올림', '', CUSTOM].indexOf(closing.v) >= 0;
+      if (okClosing) $('closing').value = closing.v;
+      if (typeof closing.c === 'string') $('closingCustom').value = closing.c;
+      $('closingCustom').hidden = $('closing').value !== CUSTOM;
+    }
     var type = VerseStore.get('type', 'visit');
     state.type = type === 'season' ? 'season' : 'visit';
   }
@@ -710,6 +777,8 @@
     $('season').value = design.season || '';
     if (state.type === 'season' && design.season) $('seasonTitle').value = byId(config.seasons, design.season).title;
     setType(state.type);
+    // 로고 모양 마스크가 준비되면 테마 색으로 다시 그린다.
+    prepareLogo().then(function () { syncControls(); render(); });
   }
 
   function loadJson(url) {

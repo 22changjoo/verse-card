@@ -17,10 +17,10 @@
 }
 
 /* ───── 크기별 여백·글자 크기 ───── */
-.size-square    { --inset: 72px; --pt: 80px;  --pb: 72px;  --px: 104px; --gap: 22px; --to-size: 26px; --greeting-size: 30px; --ref-size: 24px; --from-size: 26px; }
-.size-portrait  { --inset: 72px; --pt: 120px; --pb: 104px; --px: 104px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; }
-.size-wallpaper { --inset: 56px; --pt: 300px; --pb: 260px; --px: 96px;  --gap: 32px; --to-size: 30px; --greeting-size: 34px; --ref-size: 28px; --from-size: 30px; }
-.size-postcard  { --inset: 64px; --pt: 120px; --pb: 104px; --px: 100px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; }
+.size-square    { --inset: 72px; --pt: 80px;  --pb: 72px;  --px: 104px; --gap: 22px; --to-size: 26px; --greeting-size: 30px; --ref-size: 24px; --from-size: 26px; --logo-h: 60px; --logo-w: 400px; }
+.size-portrait  { --inset: 72px; --pt: 120px; --pb: 104px; --px: 104px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; --logo-h: 76px; --logo-w: 460px; }
+.size-wallpaper { --inset: 56px; --pt: 300px; --pb: 260px; --px: 96px;  --gap: 32px; --to-size: 30px; --greeting-size: 34px; --ref-size: 28px; --from-size: 30px; --logo-h: 92px; --logo-w: 520px; }
+.size-postcard  { --inset: 64px; --pt: 120px; --pb: 104px; --px: 100px; --gap: 28px; --to-size: 28px; --greeting-size: 32px; --ref-size: 26px; --from-size: 28px; --logo-h: 76px; --logo-w: 460px; }
 
 /* ───── 공통 구조 ───── */
 .card .decor { position: absolute; inset: 0; pointer-events: none; }
@@ -73,7 +73,12 @@
 .card .footer {
   flex: none; display: flex; flex-direction: column; align-items: var(--ai); gap: 16px;
 }
-.card .logo { display: block; max-height: 72px; max-width: 280px; width: auto; height: auto; object-fit: contain; }
+/* 로고: 크기 비율(--logo-scale)과 카드 크기별 한도(--logo-h/--logo-w)에 맞춰 줄어든다. */
+.card .logo {
+  display: block; width: auto; height: auto; object-fit: contain;
+  max-height: calc(var(--logo-h, 64px) * var(--logo-scale, 1));
+  max-width: calc(var(--logo-w, 260px) * var(--logo-scale, 1));
+}
 .card .from { font-size: var(--from-size); color: color-mix(in srgb, var(--ink) 75%, var(--bg)); }
 
 /* 장식 끄기 */

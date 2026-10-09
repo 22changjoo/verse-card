@@ -120,7 +120,17 @@
 
   <div class="field">
     <label for="sender">보낸 이</label>
-    <input id="sender" type="text" autocomplete="off" placeholder="예: ○○교회 ○○○ 목사">
+    <div class="row">
+      <input id="sender" type="text" autocomplete="off" placeholder="예: ○○교회 ○○○ 목사">
+      <select id="closing" aria-label="맺음말">
+        <option value="드림">드림</option>
+        <option value="올림">올림</option>
+        <option value="">표기 안 함</option>
+        <option value="__custom">직접 입력</option>
+      </select>
+    </div>
+    <input id="closingCustom" type="text" autocomplete="off" placeholder="맺음말을 직접 입력 (예: 보냄)" hidden>
+    <p class="hint">받는 분이 연장자이면 "올림"을 고르세요.</p>
   </div>
 
   <h2 class="section-title">디자인</h2>
@@ -163,7 +173,13 @@
       <label class="chip file-chip">로고 선택<input type="file" id="logoFile" accept="image/*" hidden></label>
       <button type="button" class="chip" id="logoClear" hidden>로고 지우기</button>
     </div>
-    <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다.</p>
+    <div class="logo-options" id="logoOptions" hidden>
+      <span class="label">로고 색</span>
+      <div class="chips" id="logoColorChips" role="group" aria-label="로고 색"></div>
+      <span class="label">로고 크기</span>
+      <div class="chips" id="logoSizeChips" role="group" aria-label="로고 크기"></div>
+    </div>
+    <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "테마에 맞춤"은 로고를 한 가지 색으로 바꿔 카드 색과 어울리게 합니다.</p>
   </div>
 
   <h2 class="section-title">이 기기에 저장된 정보</h2>
@@ -223,6 +239,7 @@
 <script src="js/library.js"></script>
 <script src="js/export.js"></script>
 <script src="js/print.js"></script>
+<script src="js/logo.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
 </body>

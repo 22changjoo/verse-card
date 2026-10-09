@@ -17,6 +17,7 @@
   var MIN_VERSE_PX = 34;
   var STEP_PX = 4;
   var WIDTH_MARGIN_PCT = 4; // 글자 크기 계산 시 말씀 폭에 두는 여유(%)
+  var LINE_HEIGHTS = [1.75, 1.65, 1.55, 1.5, 1.45, 1.4]; // 말씀 줄간격: 넓은 쪽부터 시험, 가장 좁은 값(1.4)이 최소
   var config = null;
 
   // 템플릿별 장식. 모두 이 프로젝트용으로 직접 만든 도형이며, 고정된 내부 문자열만 사용한다.
@@ -137,6 +138,7 @@
     var verseSize = size.verseSize + (design.step || 0) * STEP_PX;
 
     var vars = {
+      '--logo-scale': String(design.logoScale || 1),
       '--bg': c.bg, '--ink': c.ink, '--sub': c.sub, '--accent': c.accent, '--line': c.line,
       '--font': font.family,
       '--verse-size': verseSize + 'px',
@@ -198,6 +200,8 @@
     content.appendChild(body);
 
     var sender = (data.sender || '').trim();
+    // 맺음말: 드림 / 올림 / 직접 입력 / 없음 (지정하지 않으면 "드림")
+    var closing = data.closing === undefined ? '드림' : (data.closing || '').trim();
     if (design.logo || sender) {
       var footer = el('div', 'footer');
       if (design.logo) {
@@ -206,7 +210,7 @@
         img.src = design.logo;
         footer.appendChild(img);
       }
-      if (sender) footer.appendChild(el('div', 'from', sender + ' 드림'));
+      if (sender) footer.appendChild(el('div', 'from', closing ? sender + ' ' + closing : sender));
       content.appendChild(footer);
     }
 
@@ -223,22 +227,42 @@
     // 말씀 영역만 줄어들 수 있으므로, 넘침은 말씀 영역 자체로 판단한다.
     var isOver = function () { return verse.scrollHeight > verse.clientHeight + 1; };
     verse.style.fontSize = '';
+    verse.style.lineHeight = '';
     // 화면에서 딱 맞게 들어가도 이미지로 변환하면 글자 폭이 미세하게 달라져 줄이 늘 수 있다.
     // 그래서 폭에 여유를 두고 재어, 경계에 걸린 크기를 피한다. (측정 후 원래 폭으로 되돌림)
     verse.style.width = (100 - WIDTH_MARGIN_PCT) + '%';
+
+    // 글자 크기를 줄이기 전에 줄간격부터 좁혀 본다.
+    // 같은 글자 크기에서 줄간격(넓은 쪽부터)을 하나씩 시험하고, 그래도 안 들어가면 글자를 1px 줄여 다시 시험한다.
     var size = parseFloat(getComputedStyle(verse).fontSize);
-    while (isOver() && size > MIN_VERSE_PX) {
-      size -= 1;
+    var lh = LINE_HEIGHTS[0];
+    var fitted = false;
+    for (;;) {
       verse.style.fontSize = size + 'px';
+      for (var i = 0; i < LINE_HEIGHTS.length; i++) {
+        lh = LINE_HEIGHTS[i];
+        verse.style.lineHeight = String(lh);
+        if (!isOver()) { fitted = true; break; }
+      }
+      if (fitted || size <= MIN_VERSE_PX) break;
+      size -= 1;
     }
-    var overflow = isOver();
     verse.style.width = '';
-    return { size: size, overflow: overflow };
+    return { size: size, lineHeight: lh, overflow: !fitted };
+  }
+
+  // 지금 디자인에 쓰이는 색 (로고를 테마 색으로 맞출 때 사용)
+  function themeColors(design) {
+    var tpl = byId(config.templates, design.template) || config.templates[0];
+    var season = tpl.id === 'season' ? byId(config.seasons, design.season) : null;
+    var pal = design.palette ? byId(config.palettes, design.palette) : null;
+    return pal || (season ? season.colors : tpl.colors);
   }
 
   global.VerseCard = {
     MIN_VERSE_PX: MIN_VERSE_PX,
     setConfig: setConfig,
+    themeColors: themeColors,
     sizeOf: sizeOf,
     renderCard: renderCard,
     fitCard: fitCard
