@@ -4,7 +4,7 @@
  *
  * 파일을 수정해서 배포할 때는 아래 VERSION 숫자를 올려 주세요. 그래야 기존 사용자의 캐시가 새로 바뀝니다.
  */
-var VERSION = 'v9';
+var VERSION = 'v10';
 var APP_CACHE = 'verse-card-app-' + VERSION;
 var FONT_CACHE = 'verse-card-fonts-v1';
 
@@ -12,6 +12,7 @@ var APP_FILES = [
   './',
   'index.html',
   'library.html',
+  'history.html',
   'manifest.json',
   'css/app.css',
   'css/templates.css',
@@ -22,11 +23,17 @@ var APP_FILES = [
   'js/render.js',
   'js/split.js',
   'js/library.js',
+  'js/history.js',
+  'js/sync-core.js',
+  'js/drive.js',
+  'js/sync-config.js',
+  'js/sync.js',
   'js/export.js',
   'js/print.js',
   'js/logo.js',
   'js/app.js',
   'js/library-page.js',
+  'js/history-page.js',
   'js/pwa.js',
   'data/templates.json',
   'data/greetings.json',

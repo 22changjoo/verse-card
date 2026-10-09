@@ -320,6 +320,8 @@
     on('copyBackup', 'click', onCopyBackup);
     on('pasteImport', 'click', onPasteImport);
     updateUndo();
+    document.addEventListener('verse-sync-applied', function () { render(); updateUndo(); });
+    if (window.VerseSync) VerseSync.mountPanel($('syncPanel'));
     // 브라우저가 이 앱의 저장 공간을 임의로 정리하지 않도록 요청한다(지원하는 브라우저에서만 의미가 있음).
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
     render();

@@ -380,6 +380,40 @@ body[data-view="home"] .toast { bottom: 24px; }
   .print-sheet.a4x2::after { content: ""; position: absolute; left: 148.5mm; top: 10mm; bottom: 10mm; border-left: 0.3mm dashed #999; }
 }
 
+/* ───────── 동기화 · 보낸 내역 · 안내 배너 ───────── */
+.block-head { display: flex; align-items: baseline; justify-content: space-between; }
+.text-link { font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 500; }
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-list:empty { display: none; }
+.history-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.history-main { flex: 1; min-width: 0; }
+.history-who { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-when { font-size: 12px; color: var(--muted); flex: none; }
+.sent-hint { margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink); font-size: 13px; }
+
+.banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin: 4px 16px 0; padding: 12px 14px; border-radius: var(--radius);
+  background: var(--primary-soft); border: 1px solid var(--line); font-size: 13px;
+}
+
+.sync-card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); }
+.sync-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.sync-badge { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--surface-3); color: var(--muted); }
+.sync-badge.ok { background: var(--ok-bg); color: var(--ok-ink); border: 1px solid var(--ok-line); }
+.sync-badge.warn { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+.sync-badge.busy { background: var(--primary-soft); color: var(--primary); }
+.sync-text { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink); }
+.sync-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-actions:empty { display: none; }
+.sync-setup { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.sync-setup .sub-label { margin: 4px 0 0; }
+.sync-card .hint { margin: 0; }
+
 /* ═════════ 컴퓨터(넓은 화면): 대시보드형 배치 ═════════
    카드 만들기는 3열(내용 · 미리보기 · 디자인/보내기)로 한 화면에 펼치고, 단계 이동은 쓰지 않는다. */
 @media (min-width: 1024px) {

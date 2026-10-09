@@ -82,6 +82,8 @@
       <label class="btn file-btn">파일에서 가져오기<input type="file" id="importFile" accept="application/json,.json" hidden></label>
     </div>
 
+    <div id="syncPanel" style="margin-top:16px"></div>
+
     <details class="fallback">
       <summary>파일 저장·열기가 안 될 때: 글자로 복사해서 백업하기</summary>
       <div class="fallback-body">
@@ -98,6 +100,11 @@
 
 <script src="js/storage.js"></script>
 <script src="js/library.js"></script>
+<script src="js/history.js"></script>
+<script src="js/sync-core.js"></script>
+<script src="js/drive.js"></script>
+<script src="js/sync-config.js"></script>
+<script src="js/sync.js"></script>
 <script src="js/library-page.js"></script>
 <script>document.getElementById("themeToggle").addEventListener("click",function(){VerseTheme.toggle();});</script>
 <script src="js/pwa.js"></script>

@@ -141,3 +141,25 @@ python3 -m http.server 8765
 
 - `js/vendor/modern-screenshot.js`: [modern-screenshot](https://github.com/qq15725/modern-screenshot) (MIT)
 - 글꼴(Google Fonts): Gowun Batang, Noto Serif KR, Nanum Myeongjo, Noto Sans KR (SIL Open Font License)
+
+## 보낸 내역
+
+카드를 저장·공유·인쇄하면 `보낸 내역`(history.html)에 한 줄씩 기록됩니다. 같은 분께 같은 말씀을 입력하면 내용 화면에 "보낸 적이 있어요" 안내가 뜹니다.
+
+## 구글 드라이브 동기화 설정 (최초 1회)
+
+말씀 라이브러리·보낸 내역·최근 받는 분·설정·직접 올린 로고를 맥과 아이폰에서 같게 유지합니다. 데이터는 본인 구글 드라이브의 이 앱 전용 숨김 폴더(appDataFolder)에만 저장됩니다.
+
+1. https://console.cloud.google.com 접속 → 새 프로젝트 만들기 (예: 말씀카드)
+2. **API 및 서비스 → 라이브러리**에서 `Google Drive API` 사용 설정
+3. **OAuth 동의 화면**: 사용자 유형 *외부* → 앱 이름·이메일 입력 → 범위에 `.../auth/drive.appdata` 추가 → 테스트 사용자에 본인 구글 계정 추가 (또는 "프로덕션으로 게시")
+4. **사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**: 유형 *웹 애플리케이션*, 승인된 JavaScript 원본에 `https://22changjoo.github.io` 추가
+5. 만들어진 **클라이언트 ID**(`...apps.googleusercontent.com`)를 앱 홈의 설정 → "구글 드라이브 동기화"에 붙여넣고 저장 → "구글 드라이브에 연결"
+6. 아이폰에서도 같은 방법으로 한 번 연결
+
+참고
+- "확인되지 않은 앱" 경고가 나오면 고급 → 이동을 선택합니다 (본인이 만든 앱).
+- 아이폰 홈 화면 앱에서 로그인이 막히면 Safari에서 연결해 보세요.
+- 처음 연결할 때 두 기기 데이터는 합쳐지고, 같은 항목이 다르면 나중에 수정한 쪽이 이깁니다.
+- 설정·로고가 다른 기기에서 바뀌면 "적용하기" 안내가 뜹니다.
+- 동기화 데이터는 구글 계정 설정 → 서드파티 앱 → 데이터 삭제로 지울 수 있습니다.

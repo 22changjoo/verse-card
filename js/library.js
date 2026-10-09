@@ -37,7 +37,21 @@
   }
 
   var base = [];
-  var data = { texts: {}, custom: [] };
+  // meta: 항목별 마지막 수정 시각(ms) / deleted: 삭제한 직접 추가 항목의 삭제 시각 — 여러 기기 동기화에서 최신 수정이 이기도록 쓴다.
+  var data = { texts: {}, custom: [], meta: {}, deleted: {} };
+
+  function now() { return Date.now(); }
+
+  function readStore() {
+    var saved = global.VerseStore.get(STORE_KEY, null);
+    data = { texts: {}, custom: [], meta: {}, deleted: {} };
+    if (saved && typeof saved === 'object') {
+      data.texts = saved.texts && typeof saved.texts === 'object' ? saved.texts : {};
+      data.custom = Array.isArray(saved.custom) ? saved.custom : [];
+      data.meta = saved.meta && typeof saved.meta === 'object' ? saved.meta : {};
+      data.deleted = saved.deleted && typeof saved.deleted === 'object' ? saved.deleted : {};
+    }
+  }
 
   // 저장할 때마다 "마지막으로 고친 시각"을 남겨, 백업한 뒤에 바뀐 내용이 있는지 알려 줄 수 있게 한다.
   function persist() {
@@ -60,11 +74,7 @@
       .then(function (r) { if (!r.ok) throw new Error('verses.json ' + r.status); return r.json(); })
       .then(function (list) {
         base = list;
-        var saved = global.VerseStore.get(STORE_KEY, null);
-        if (saved && typeof saved === 'object') {
-          data.texts = saved.texts && typeof saved.texts === 'object' ? saved.texts : {};
-          data.custom = Array.isArray(saved.custom) ? saved.custom : [];
-        }
+        readStore();
         return list;
       });
   }
@@ -84,23 +94,24 @@
     var c = data.custom.filter(function (x) { return x.id === id; })[0];
     if (c) {
       c.text = text;
-    } else if (text.trim()) {
-      data.texts[id] = text;
+      c.at = now();
     } else {
-      delete data.texts[id];
+      if (text.trim()) data.texts[id] = text; else delete data.texts[id];
+      data.meta[id] = now(); // 지운 것도 "지운 시각"으로 남겨 다른 기기에도 전해진다
     }
     return persist();
   }
 
   function addCustom(entry) {
     var id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    data.custom.push({ id: id, ref: entry.ref, theme: entry.theme || [], text: entry.text || '' });
+    data.custom.push({ id: id, ref: entry.ref, theme: entry.theme || [], text: entry.text || '', at: now() });
     persist();
     return id;
   }
 
   function removeCustom(id) {
     data.custom = data.custom.filter(function (x) { return x.id !== id; });
+    data.deleted[id] = now();
     return persist();
   }
 
@@ -161,14 +172,20 @@
   function applyDedupe(plan) {
     global.VerseStore.set(BACKUP_KEY, { at: new Date().toISOString(), texts: data.texts, custom: data.custom });
     // 객체를 그대로 저장한 뒤 새 객체로 바꿔 쓰므로 백업은 영향을 받지 않는다.
-    data = { texts: Object.assign({}, data.texts), custom: data.custom.map(function (c) { return Object.assign({}, c); }) };
+    data = {
+      texts: Object.assign({}, data.texts),
+      custom: data.custom.map(function (c) { return Object.assign({}, c); }),
+      meta: Object.assign({}, data.meta),
+      deleted: Object.assign({}, data.deleted)
+    };
 
+    var t = now();
     plan.moves.forEach(function (mv) {
       var c = data.custom.filter(function (x) { return x.id === mv.to; })[0];
-      if (c) c.text = mv.text; else data.texts[mv.to] = mv.text;
+      if (c) { c.text = mv.text; c.at = t; } else { data.texts[mv.to] = mv.text; data.meta[mv.to] = t; }
     });
     var gone = {};
-    plan.remove.forEach(function (r) { gone[r.id] = true; });
+    plan.remove.forEach(function (r) { gone[r.id] = true; data.deleted[r.id] = t; });
     data.custom = data.custom.filter(function (c) { return !gone[c.id]; });
     persist();
     return { removed: plan.remove.length, moved: plan.moves.length, conflicts: plan.conflicts.length };
@@ -179,7 +196,18 @@
   function restoreBackup() {
     var b = global.VerseStore.get(BACKUP_KEY, null);
     if (!b) return false;
-    data = { texts: b.texts || {}, custom: Array.isArray(b.custom) ? b.custom : [] };
+    var t = now();
+    var restoredCustom = Array.isArray(b.custom) ? b.custom : [];
+    var texts = b.texts || {};
+    var meta = {};
+    var deleted = Object.assign({}, data.deleted);
+    // 되돌린 상태가 다른 기기보다 우선하도록, 복원한 항목은 "지금 수정한 것"으로, 정리 뒤에 생긴 항목은 "지금 삭제한 것"으로 기록한다.
+    Object.keys(texts).forEach(function (id) { meta[id] = t; });
+    Object.keys(data.texts).forEach(function (id) { if (!(id in texts)) meta[id] = t; });
+    var keep = {};
+    restoredCustom = restoredCustom.map(function (c) { keep[c.id] = true; delete deleted[c.id]; return Object.assign({}, c, { at: t }); });
+    data.custom.forEach(function (c) { if (!keep[c.id]) deleted[c.id] = t; });
+    data = { texts: texts, custom: restoredCustom, meta: meta, deleted: deleted };
     persist();
     global.VerseStore.remove(BACKUP_KEY);
     return true;
@@ -219,6 +247,7 @@
       var t = obj.texts[id];
       if (knownIds[id] && typeof t === 'string' && t.trim()) {
         data.texts[id] = t;
+        data.meta[id] = now();
         updated++;
       }
     });
@@ -229,12 +258,14 @@
         id: String(c.id || ('custom-' + Date.now().toString(36) + added)),
         ref: c.ref,
         theme: Array.isArray(c.theme) ? c.theme.filter(function (t) { return THEMES.indexOf(t) >= 0; }) : [],
-        text: typeof c.text === 'string' ? c.text : ''
+        text: typeof c.text === 'string' ? c.text : '',
+        at: now()
       };
       if (existing) {
-        existing.ref = clean.ref; existing.theme = clean.theme; existing.text = clean.text;
+        existing.ref = clean.ref; existing.theme = clean.theme; existing.text = clean.text; existing.at = clean.at;
         updated++;
       } else {
+        delete data.deleted[clean.id];
         data.custom.push(clean);
         added++;
       }
@@ -243,7 +274,20 @@
     return { updated: updated, added: added };
   }
 
+  // ── 동기화(js/sync.js)가 쓰는 함수 ──
+  function reload() { readStore(); }
+
+  // 동기화를 처음 켤 때: 수정 시각이 없는 예전 항목에 "지금"을 찍어, 이 기기의 내용이 사라지지 않게 한다.
+  function stampLegacy() {
+    var t = now(), changed = false;
+    Object.keys(data.texts).forEach(function (id) { if (!data.meta[id]) { data.meta[id] = t; changed = true; } });
+    data.custom.forEach(function (c) { if (!c.at) { c.at = t; changed = true; } });
+    if (changed) persist();
+  }
+
   global.VerseLibrary = {
+    reload: reload,
+    stampLegacy: stampLegacy,
     THEMES: THEMES,
     load: load,
     list: list,

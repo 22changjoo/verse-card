@@ -136,7 +136,16 @@
     };
   }
 
-  function saveDesign() { VerseStore.set('design', design); }
+  // 설정을 고친 시각(여러 기기 동기화에서 최신 설정이 이기도록 쓴다). 앱을 열기만 해서는 갱신하지 않는다.
+  var lastDesignJson = null;
+  function touchSettings() { VerseStore.set('settingsAt', Date.now()); }
+  function saveDesign() {
+    var json = JSON.stringify(design);
+    if (json === lastDesignJson) return;
+    lastDesignJson = json;
+    VerseStore.set('design', design);
+    touchSettings();
+  }
 
   // ── 미리보기 ──
   function fitScale() {
@@ -215,10 +224,79 @@
       var name = (p[0] || '').trim();
       if (!name) return;
       list = list.filter(function (x) { return x.name !== name; });
-      list.unshift({ name: name, honorific: p[1] || '' });
+      list.unshift({ name: name, honorific: p[1] || '', at: Date.now() });
     });
     VerseStore.set('recent', list.slice(0, RECENT_MAX));
     renderRecent();
+  }
+
+  // ── 보낸 내역 ──
+  function sentLabel() {
+    if (state.type === 'season') {
+      var s = design.season ? byId(config.seasons, design.season) : null;
+      return s ? s.name : '절기 인사';
+    }
+    var sel = $('situation');
+    return sel.value ? sel.options[sel.selectedIndex].textContent : '';
+  }
+
+  // 카드를 실제로 저장·공유·인쇄했을 때 한 줄 남긴다. via: 'save' | 'share' | 'print'
+  function recordHistory(data, pages, via) {
+    var recipients = [[data.recipient, data.honorific], [data.recipient2, data.honorific2]]
+      .filter(function (p) { return (p[0] || '').trim(); })
+      .map(function (p) { return { name: p[0].trim(), honorific: p[1] || '' }; });
+    var size = VerseCard.sizeOf(design);
+    VerseHistory.add({
+      via: via, type: state.type, label: sentLabel(), recipients: recipients,
+      ref: (data.ref || '').trim(), version: data.version || '',
+      size: size.id, sizeName: size.name, template: design.template, pages: pages.length
+    });
+    renderHomeHistory();
+  }
+
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+  }
+
+  // 홈: 최근 보낸 카드 3건
+  function renderHomeHistory() {
+    var box = $('homeHistory');
+    if (!box) return;
+    box.replaceChildren();
+    var list = VerseHistory.list().slice(0, 3);
+    list.forEach(function (e) {
+      var row = document.createElement('div');
+      row.className = 'history-row';
+      var main = document.createElement('div');
+      main.className = 'history-main';
+      var who = document.createElement('div');
+      who.className = 'history-who';
+      who.textContent = VerseHistory.recipientsText(e) + '께';
+      var sub = document.createElement('div');
+      sub.className = 'history-sub';
+      sub.textContent = [e.ref, e.label].filter(Boolean).join(' · ') || '말씀 없음';
+      main.appendChild(who); main.appendChild(sub);
+      var when = document.createElement('div');
+      when.className = 'history-when';
+      when.textContent = fmtDate(e.at);
+      row.appendChild(main); row.appendChild(when);
+      box.appendChild(row);
+    });
+    $('homeHistoryEmpty').hidden = list.length > 0;
+  }
+
+  // 같은 분께 같은 말씀을 이미 보냈다면 알려 준다.
+  function updateSentHint() {
+    var hint = $('sentHint');
+    if (!hint) return;
+    var d = readData();
+    var names = [d.recipient, d.recipient2];
+    var found = VerseHistory.findSent(names, d.ref.trim() ? VerseLibrary.refKey(d.ref) : '', VerseLibrary.refKey);
+    if (!found.length) { hint.hidden = true; return; }
+    var e = found[0];
+    hint.textContent = VerseHistory.recipientsText(e) + '께 이 말씀(' + e.ref + ')을 ' + fmtDate(e.at) + '에 보낸 적이 있어요.' +
+      (found.length > 1 ? ' (총 ' + found.length + '번)' : '');
+    hint.hidden = false;
   }
 
   // 자동완성으로 이름을 고르면 지난번 호칭도 함께 채운다.
@@ -253,6 +331,7 @@
     updateSplitUi(data, fit, pages);
     state.pagesCount = pages.length;
     updateSummary();
+    updateSentHint();
     prewarm();
     return fit;
   }
@@ -658,6 +737,7 @@
     $('logoClear').addEventListener('click', function () {
       VerseStore.remove('logo');
       VerseStore.remove('logoMono');
+      VerseStore.set('logoAt', Date.now());
       prepareLogo().then(function () { syncControls(); saveDesign(); render(); });
     });
 
@@ -716,6 +796,7 @@
         toast('로고를 저장하지 못했습니다. 더 작은 이미지를 사용해 주세요.');
         return null;
       }
+      VerseStore.set('logoAt', Date.now());
       return VerseLogo.loadImage(res.mono).then(function (img) {
         logoMonoImg = img;
         logoData = { orig: res.orig, mono: res.mono, builtin: false };
@@ -757,6 +838,7 @@
       if (kind === 'save') {
         await VerseExport.save(pages, buildDesign(), data);
         rememberRecipients(data);
+        recordHistory(data, pages, 'save');
         toast(pages.length > 1 ? pages.length + '장을 저장했습니다.' : '이미지를 저장했습니다.');
       } else {
         var result = await VerseExport.share(pages, buildDesign(), data);
@@ -764,6 +846,7 @@
           toast('이 브라우저는 공유를 지원하지 않습니다. "이미지 저장"을 이용해 주세요.');
         } else if (result === 'shared') {
           rememberRecipients(data);
+          recordHistory(data, pages, 'share');
           toast('공유했습니다.');
         }
       }
@@ -790,8 +873,10 @@
     var post = Object.assign(buildDesign(), { size: 'postcard' });
     toast('인쇄용 이미지를 만드는 중입니다…');
     try {
-      var blobs = await VerseExport.getBlobs(buildPages(post), post);
+      var postPages = buildPages(post);
+      var blobs = await VerseExport.getBlobs(postPages, post);
       rememberRecipients(data);
+      recordHistory(data, postPages, 'print');
       $('toast').hidden = true;
       await VersePrint.run(blobs, layout);
     } catch (err) {
@@ -843,6 +928,14 @@
       if (ui.view === 'create') setView('home', { fromPop: true });
     });
 
+    // 구글 드라이브 동기화로 다른 기기의 변경을 받았을 때: 목록은 바로 갱신하고, 설정·로고는 새로고침으로 적용한다.
+    document.addEventListener('verse-sync-applied', function (ev) {
+      var c = (ev.detail && ev.detail.changed) || {};
+      renderRecent(); renderHomeHistory(); updateSentHint();
+      if (c.settings || c.logo) $('syncBanner').hidden = false;
+    });
+    $('syncReload').addEventListener('click', function () { location.reload(); });
+
     // 화면 밝기
     $('themeToggle').addEventListener('click', function () { VerseTheme.toggle(); syncThemeSeg(); });
     document.querySelectorAll('#themeSeg [data-theme-mode]').forEach(function (b) {
@@ -857,6 +950,7 @@
     // 저장된 정보 지우기
     $('clearRecent').addEventListener('click', function () {
       if (!confirm('최근 받는 분 기록을 모두 지울까요?')) return;
+      VerseStore.set('recentClearedAt', Date.now());
       VerseStore.remove('recent');
       renderRecent();
       toast('기록을 지웠습니다.');
@@ -914,12 +1008,13 @@
       $(id).addEventListener('change', render);
     });
     // 보낸 이는 기본값으로 기억한다.
-    $('sender').addEventListener('input', function () { VerseStore.set('sender', this.value); });
+    $('sender').addEventListener('input', function () { VerseStore.set('sender', this.value); touchSettings(); });
     // 맺음말(드림/올림 등)도 기억하고, "직접 입력"이면 입력칸을 보여 준다.
     bindCustomHonorific('closing', 'closingCustom');
     ['closing', 'closingCustom'].forEach(function (id) {
       $(id).addEventListener('change', function () {
         VerseStore.set('closing', { v: $('closing').value, c: $('closingCustom').value });
+        touchSettings();
       });
     });
 
@@ -974,16 +1069,20 @@
     fillSelect($('season'), config.seasons);
 
     restore();
+    lastDesignJson = JSON.stringify(design); // 앱을 여는 것만으로는 "설정을 고친 시각"을 바꾸지 않는다
     buildControls();
     bindEvents();
     renderRecent();
+    renderHomeHistory();
 
     $('season').value = design.season || '';
     if (state.type === 'season' && design.season) $('seasonTitle').value = byId(config.seasons, design.season).title;
     setType(state.type);
+    lastDesignJson = JSON.stringify(design); // 시작할 때의 자동 보정은 저장하지 않는다
     buildHomeSeasons();
     syncThemeSeg();
     setView('home');
+    if (window.VerseSync) VerseSync.mountPanel($('syncPanel'));
     // 로고 모양 마스크가 준비되면 테마 색으로 다시 그린다.
     prepareLogo().then(function () { syncControls(); render(); });
   }
