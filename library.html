@@ -66,6 +66,16 @@
       <button type="button" class="btn" id="exportBtn">파일로 내보내기</button>
       <label class="btn file-btn">파일에서 가져오기<input type="file" id="importFile" accept="application/json,.json" hidden></label>
     </div>
+
+    <details class="fallback">
+      <summary>파일 저장·열기가 안 될 때: 글자로 복사해서 백업하기</summary>
+      <div class="fallback-body">
+        <p class="hint">① "백업 내용 복사"를 누르고 메모 앱 등에 붙여넣어 보관하세요. ② 복원할 때는 보관해 둔 글자를 아래 칸에 붙여넣고 "붙여넣은 내용 가져오기"를 누르세요.</p>
+        <button type="button" class="chip" id="copyBackup">백업 내용 복사</button>
+        <textarea id="pasteBox" rows="5" aria-label="백업 내용" placeholder="복원할 때 여기에 붙여넣기"></textarea>
+        <button type="button" class="chip" id="pasteImport">붙여넣은 내용 가져오기</button>
+      </div>
+    </details>
   </section>
 </main>
 

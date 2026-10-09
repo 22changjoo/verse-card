@@ -4,7 +4,7 @@
  *
  * 파일을 수정해서 배포할 때는 아래 VERSION 숫자를 올려 주세요. 그래야 기존 사용자의 캐시가 새로 바뀝니다.
  */
-var VERSION = 'v5';
+var VERSION = 'v6';
 var APP_CACHE = 'verse-card-app-' + VERSION;
 var FONT_CACHE = 'verse-card-fonts-v1';
 
@@ -78,32 +78,35 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // 개발 중(localhost)에는 항상 최신 파일을 먼저 받고, 오프라인일 때만 저장본을 쓴다.
-  var dev = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-  if (dev && url.origin === location.origin) {
-    event.respondWith(
-      fetch(req).then(function (res) {
-        var copy = res.clone();
-        if (res.ok) caches.open(APP_CACHE).then(function (c) { c.put(req, copy); });
-        return res;
-      }).catch(function () { return caches.match(req, { ignoreSearch: true }); })
-    );
-    return;
-  }
-
-  // 같은 출처의 정적 파일: 저장본을 먼저 보여 주고, 뒤에서 새로 받아 둔다.
+  // 같은 출처의 정적 파일: 항상 서버의 최신 파일을 먼저 받는다. (예전 화면과 새 코드가 섞여 버튼이 안 먹는 일을 막기 위함)
+  // 인터넷이 없거나 4초 안에 응답이 없을 때만 저장해 둔 파일을 쓴다.
   if (url.origin === location.origin) {
-    event.respondWith(
-      caches.open(APP_CACHE).then(function (cache) {
-        return cache.match(req, { ignoreSearch: true }).then(function (hit) {
-          var network = fetch(req).then(function (res) {
-            if (res && res.ok) cache.put(req, res.clone());
-            return res;
-          }).catch(function () { return hit; });
-          return hit || network;
-        });
-      })
-    );
+    event.respondWith(networkFirst(req));
+    return;
   }
   // 그 밖의 외부 요청은 건드리지 않는다.
 });
+
+var NETWORK_TIMEOUT_MS = 4000;
+
+function networkFirst(req) {
+  return caches.open(APP_CACHE).then(function (cache) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      var finish = function (res) { if (!settled) { settled = true; clearTimeout(timer); resolve(res); } };
+      var fromCache = function () { return cache.match(req, { ignoreSearch: true }); };
+
+      var timer = setTimeout(function () {
+        fromCache().then(function (hit) { if (hit) finish(hit); });
+      }, NETWORK_TIMEOUT_MS);
+
+      // cache: 'no-cache' → 브라우저 임시 저장본이 아니라 서버에서 변경 여부를 확인한다.
+      fetch(req, { cache: 'no-cache' }).then(function (res) {
+        if (res && res.ok) cache.put(req, res.clone());
+        finish(res);
+      }).catch(function () {
+        fromCache().then(function (hit) { finish(hit || Response.error()); });
+      });
+    });
+  });
+}

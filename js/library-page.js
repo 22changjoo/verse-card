@@ -121,6 +121,7 @@
   // 백업 상태 안내: 입력한 내용은 이 브라우저에만 있으므로, 백업하지 않았거나 백업 뒤에 고쳤으면 알려 준다.
   function renderBackupNote() {
     var note = $('backupNote');
+    if (!note) return;
     if (!VerseLibrary.filledCount()) { note.hidden = true; return; }
     var st = VerseLibrary.backupStatus();
     var when = st.at ? new Date(st.at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
@@ -194,7 +195,7 @@
     render();
   }
 
-  function updateUndo() { $('undoBtn').hidden = !VerseLibrary.hasBackup(); }
+  function updateUndo() { var b = $('undoBtn'); if (b) b.hidden = !VerseLibrary.hasBackup(); }
 
   function onAdd() {
     var ref = $('addRef').value.trim();
@@ -260,18 +261,67 @@
     reader.readAsText(file);
   }
 
+  // 파일 저장·열기가 막힌 환경을 위한 대체 방법: 글자로 복사해 두었다가 붙여넣어 가져온다.
+  function onCopyBackup() {
+    var text = VerseLibrary.exportJson();
+    var done = function () {
+      VerseLibrary.markExported();
+      renderBackupNote();
+      toast('복사했습니다. 메모 앱 등에 붙여넣어 보관해 두세요.');
+    };
+    var fallback = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      if (ok) done(); else toast('복사하지 못했습니다. 아래 칸에서 직접 복사해 주세요.');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+    $('pasteBox').value = text; // 복사가 막힌 경우를 위해 칸에도 보여 준다(직접 선택해 복사 가능)
+  }
+
+  function onPasteImport() {
+    var text = $('pasteBox').value.trim();
+    if (!text) { toast('가져올 내용을 먼저 붙여넣어 주세요.'); return; }
+    try {
+      var res = VerseLibrary.importJson(text);
+      toast('가져왔습니다. 갱신 ' + res.updated + '개, 추가 ' + res.added + '개');
+      $('pasteBox').value = '';
+      render();
+    } catch (err) {
+      toast(err && err.message ? err.message : '내용을 읽을 수 없습니다.');
+    }
+  }
+
+  // 화면 파일이 예전 것이어서 일부 버튼이 없어도, 나머지 버튼은 계속 동작하게 한다.
+  function on(id, type, fn) {
+    var node = $(id);
+    if (node) node.addEventListener(type, fn);
+  }
+
   function init() {
     buildThemeChips();
-    $('filledOnly').addEventListener('change', function () { state.filledOnly = this.checked; render(); });
-    $('addBtn').addEventListener('click', onAdd);
-    $('dedupeBtn').addEventListener('click', onDedupe);
-    $('undoBtn').addEventListener('click', onUndo);
+    on('filledOnly', 'change', function () { state.filledOnly = this.checked; render(); });
+    on('addBtn', 'click', onAdd);
+    on('dedupeBtn', 'click', onDedupe);
+    on('undoBtn', 'click', onUndo);
+    on('exportBtn', 'click', onExport);
+    on('backupNow', 'click', onExport);
+    on('importFile', 'change', onImport);
+    on('copyBackup', 'click', onCopyBackup);
+    on('pasteImport', 'click', onPasteImport);
     updateUndo();
-    $('exportBtn').addEventListener('click', onExport);
-    $('backupNow').addEventListener('click', onExport);
     // 브라우저가 이 앱의 저장 공간을 임의로 정리하지 않도록 요청한다(지원하는 브라우저에서만 의미가 있음).
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
-    $('importFile').addEventListener('change', onImport);
     render();
   }
 

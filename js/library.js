@@ -202,9 +202,14 @@
 
   // 반환: { updated, added } 또는 형식이 맞지 않으면 예외
   function importJson(text) {
-    var obj = JSON.parse(text);
+    var obj;
+    try {
+      obj = JSON.parse(text);
+    } catch (e) {
+      throw new Error('말씀카드 라이브러리 백업 내용이 아닙니다. "백업 내용 복사"로 복사한 글자 전체를 붙여넣어 주세요.');
+    }
     if (!obj || obj.format !== FORMAT || typeof obj.texts !== 'object') {
-      throw new Error('말씀카드 라이브러리 파일이 아닙니다.');
+      throw new Error('말씀카드 라이브러리 백업 내용이 아닙니다.');
     }
     var knownIds = {};
     base.forEach(function (v) { knownIds[v.id] = true; });

@@ -13,6 +13,10 @@
 .lib { max-width: 640px; margin: 0 auto; padding: 8px 16px 24px; }
 .lib-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 
+.fallback { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.fallback summary { cursor: pointer; min-height: 52px; padding: 14px; font-size: 14px; color: var(--accent); }
+.fallback-body { padding: 0 14px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.fallback-body textarea { width: 100%; min-height: 110px; }
 .backup-note {
   display: flex; align-items: center; justify-content: space-between; gap: 10px 12px; flex-wrap: wrap;
   margin-bottom: 12px; padding: 12px 14px; border-radius: var(--radius);
