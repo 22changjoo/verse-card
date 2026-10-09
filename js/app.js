@@ -9,7 +9,7 @@
   // 로고 크기 비율 / 로고 색 선택지
   var LOGO_SCALE = { s: 0.75, m: 1, l: 1.35 };
   var LOGO_SIZES = [['s', '작게'], ['m', '보통'], ['l', '크게']];
-  var LOGO_COLORS = [['auto', '테마에 맞춤'], ['original', '원본 색'], ['white', '흰색'], ['black', '검정']];
+  var LOGO_COLORS = [['auto', '자동'], ['theme', '테마 단색'], ['original', '원본 색'], ['white', '흰색'], ['black', '검정']];
   var HONORIFICS = ['님', '성도님', '집사님', '권사님', '장로님', '목사님', '사모님'];
   var CUSTOM = '__custom';
   var STEP_MIN = -4;
@@ -20,8 +20,10 @@
   // splitOn: 긴 말씀을 절 단위로 여러 장으로 나누는 중 / page: 미리보기 중인 장(0부터) / showNo: "1/3" 표시
   var state = { type: 'visit', splitOn: false, page: 0, showNo: true };
   var design = { template: 'cream', size: 'square', season: null, palette: null, font: null, deco: true, step: 0,
-    logoOn: false, logoColor: 'auto', logoSize: 'm' };
+    logoOn: true, logoColor: 'auto', logoSize: 'm', logoPref: 1 };
   var logoMonoImg = null; // 로고 모양 마스크(색을 입히는 데 사용)
+  var BUILTIN_LOGO = 'assets/logo/leaf.png'; // 기본 로고(교회 로고 중 나뭇잎만)
+  var logoData = { orig: null, mono: null, builtin: false };
 
   var previewEl = document.querySelector('.preview');
   var previewFrame = $('previewFrame');
@@ -61,33 +63,59 @@
     return d;
   }
 
-  function currentLogo() { return VerseStore.get('logo', null); }
+  // 지금 쓰는 로고: 사용자가 올린 로고가 있으면 그것, 없으면 앱에 들어 있는 기본 로고(높은뜻푸른교회 나뭇잎)
+  function currentLogo() { return logoData.orig; }
 
-  // 카드에 넣을 로고 이미지. "테마에 맞춤"이면 로고를 카드의 보조색 한 가지 색으로 바꿔 넣는다.
+  // 색의 밝기(0~1). 배경이 밝은지 어두운지 판단할 때 쓴다.
+  function luminance(hex) {
+    var h = hex.replace('#', '');
+    var ch = [0, 2, 4].map(function (i) {
+      var v = parseInt(h.substr(i, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  }
+
+  // 카드에 넣을 로고 이미지.
+  //  자동: 밝은 배경에서는 원본 색, 어두운 배경에서는 테마 색 한 가지로 바꿔 넣는다.
+  //  테마 단색: 항상 카드의 보조색 한 가지 / 원본 색 / 흰색 / 검정
   function logoSource() {
     if (!design.logoOn) return null;
     var orig = currentLogo();
     if (!orig) return null;
     var mode = design.logoColor || 'auto';
-    if (mode === 'original' || !logoMonoImg) return orig;
-    var color = mode === 'auto' ? VerseCard.themeColors(design).sub : (mode === 'white' ? '#ffffff' : '#222222');
+    if (!logoMonoImg) return orig;
+    var colors = VerseCard.themeColors(design);
+    if (mode === 'auto') mode = luminance(colors.bg) > 0.4 ? 'original' : 'theme';
+    if (mode === 'original') return orig;
+    var color = mode === 'theme' ? colors.sub : (mode === 'white' ? '#ffffff' : '#222222');
     return VerseLogo.tint(logoMonoImg, color);
   }
 
   // 저장된 로고의 모양 마스크를 준비한다. (예전 방식으로 저장된 로고는 여기서 다듬어 다시 저장)
   function prepareLogo() {
-    var orig = currentLogo();
-    if (!orig) { logoMonoImg = null; return Promise.resolve(); }
-    var mono = VerseStore.get('logoMono', null);
-    var ready = mono
-      ? Promise.resolve(mono)
-      : VerseLogo.fromDataUrl(orig).then(function (res) {
-          VerseStore.set('logo', res.orig);
-          VerseStore.set('logoMono', res.mono);
-          return res.mono;
-        });
-    return ready.then(VerseLogo.loadImage).then(function (img) { logoMonoImg = img; })
-      .catch(function () { logoMonoImg = null; });
+    var orig = VerseStore.get('logo', null);
+    var ready;
+    if (orig) {
+      var mono = VerseStore.get('logoMono', null);
+      ready = mono
+        ? Promise.resolve({ orig: orig, mono: mono })
+        : VerseLogo.fromDataUrl(orig).then(function (res) {
+            VerseStore.set('logo', res.orig);
+            VerseStore.set('logoMono', res.mono);
+            return res;
+          });
+      ready = ready.then(function (res) { logoData = { orig: res.orig, mono: res.mono, builtin: false }; });
+    } else {
+      // 올린 로고가 없으면 앱에 들어 있는 기본 로고를 쓴다.
+      ready = VerseLogo.fromDataUrl(BUILTIN_LOGO).then(function (res) {
+        logoData = { orig: res.orig, mono: res.mono, builtin: true };
+      });
+    }
+    return ready
+      .then(function () { return VerseLogo.loadImage(logoData.mono); })
+      .then(function (img) { logoMonoImg = img; })
+      .catch(function () { logoData = { orig: null, mono: null, builtin: false }; logoMonoImg = null; });
   }
 
   function buildDesign() {
@@ -497,12 +525,11 @@
     $('decoToggle').addEventListener('change', function () { design.deco = this.checked; saveDesign(); render(); });
     $('logoToggle').addEventListener('change', function () { design.logoOn = this.checked; saveDesign(); render(); });
     $('logoFile').addEventListener('change', onLogoPicked);
+    // 올린 로고를 지우면 기본 로고(나뭇잎)로 되돌아간다.
     $('logoClear').addEventListener('click', function () {
       VerseStore.remove('logo');
       VerseStore.remove('logoMono');
-      logoMonoImg = null;
-      design.logoOn = false;
-      syncControls(); saveDesign(); render();
+      prepareLogo().then(function () { syncControls(); saveDesign(); render(); });
     });
 
     var colorBox = $('logoColorChips');
@@ -540,8 +567,9 @@
     var hasLogo = !!currentLogo();
     $('logoToggle').disabled = !hasLogo;
     $('logoToggle').checked = hasLogo && design.logoOn;
-    $('logoClear').hidden = !hasLogo;
+    $('logoClear').hidden = !hasLogo || logoData.builtin;
     $('logoOptions').hidden = !hasLogo;
+    $('logoName').textContent = logoData.builtin ? '기본 로고(높은뜻푸른교회 나뭇잎)' : '내가 올린 로고';
     setPressed($('logoColorChips'), design.logoColor || 'auto');
     setPressed($('logoSizeChips'), design.logoSize || 'm');
     updateStepLabel();
@@ -561,6 +589,7 @@
       }
       return VerseLogo.loadImage(res.mono).then(function (img) {
         logoMonoImg = img;
+        logoData = { orig: res.orig, mono: res.mono, builtin: false };
         design.logoOn = true;
         design.logoColor = 'auto';
         syncControls(); saveDesign(); render();
@@ -742,7 +771,8 @@
       if (saved.font && config.fonts.some(function (f) { return f.id === saved.font; })) design.font = saved.font;
       design.deco = saved.deco !== false;
       design.step = Math.max(STEP_MIN, Math.min(STEP_MAX, parseInt(saved.step, 10) || 0));
-      design.logoOn = !!saved.logoOn && !!currentLogo();
+      // 기본 로고가 생기기 전에 저장된 설정은 "로고 안 씀"으로 되어 있으므로, 한 번만 켜 둔 상태로 바꾼다.
+      design.logoOn = saved.logoPref === 1 ? !!saved.logoOn : true;
       if (LOGO_COLORS.some(function (c) { return c[0] === saved.logoColor; })) design.logoColor = saved.logoColor;
       if (LOGO_SCALE[saved.logoSize]) design.logoSize = saved.logoSize;
     }

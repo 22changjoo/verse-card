@@ -170,16 +170,17 @@
     <label class="check"><input type="checkbox" id="decoToggle" checked> 장식 표시</label>
     <div class="logo-row">
       <label class="check"><input type="checkbox" id="logoToggle" disabled> 교회 로고 표시</label>
-      <label class="chip file-chip">로고 선택<input type="file" id="logoFile" accept="image/*" hidden></label>
-      <button type="button" class="chip" id="logoClear" hidden>로고 지우기</button>
+      <label class="chip file-chip">다른 로고 올리기<input type="file" id="logoFile" accept="image/*" hidden></label>
+      <button type="button" class="chip" id="logoClear" hidden>올린 로고 지우기</button>
     </div>
+    <p class="hint">지금 로고: <strong id="logoName">기본 로고</strong></p>
     <div class="logo-options" id="logoOptions" hidden>
       <span class="label">로고 색</span>
       <div class="chips" id="logoColorChips" role="group" aria-label="로고 색"></div>
       <span class="label">로고 크기</span>
       <div class="chips" id="logoSizeChips" role="group" aria-label="로고 크기"></div>
     </div>
-    <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "테마에 맞춤"은 로고를 한 가지 색으로 바꿔 카드 색과 어울리게 합니다.</p>
+    <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "자동"은 밝은 배경에서는 로고 원래 색, 어두운 배경에서는 카드에 어울리는 한 가지 색으로 바꿔 줍니다.</p>
   </div>
 
   <h2 class="section-title">이 기기에 저장된 정보</h2>

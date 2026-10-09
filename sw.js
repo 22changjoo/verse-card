@@ -4,7 +4,7 @@
  *
  * 파일을 수정해서 배포할 때는 아래 VERSION 숫자를 올려 주세요. 그래야 기존 사용자의 캐시가 새로 바뀝니다.
  */
-var VERSION = 'v2';
+var VERSION = 'v3';
 var APP_CACHE = 'verse-card-app-' + VERSION;
 var FONT_CACHE = 'verse-card-fonts-v1';
 
@@ -30,6 +30,7 @@ var APP_FILES = [
   'data/templates.json',
   'data/greetings.json',
   'data/verses.json',
+  'assets/logo/leaf.png',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',
