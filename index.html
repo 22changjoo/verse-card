@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#faf3e3">
+<meta name="theme-color" id="metaTheme" content="#f5f2e8">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="말씀카드">
@@ -11,191 +12,298 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <title>말씀카드</title>
+<script src="js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/templates.css">
 </head>
-<body>
-<header class="topbar">
-  <div class="topline">
-    <h1>말씀카드</h1>
-    <a class="toplink" href="library.html">말씀 라이브러리</a>
-  </div>
-  <div class="seg" role="tablist" aria-label="카드 유형">
-    <button type="button" role="tab" id="tab-visit" aria-selected="true" data-type="visit">심방 카드</button>
-    <button type="button" role="tab" id="tab-season" aria-selected="false" data-type="season">절기 인사 카드</button>
+<body data-view="home">
+<div class="app">
+
+<header class="appbar">
+  <button type="button" class="brand" id="brandHome" aria-label="홈으로 가기">
+    <span class="brand-mark"><img src="assets/logo/leaf.png" alt=""></span>
+    <span class="brand-name">말씀카드</span>
+  </button>
+  <div class="appbar-actions">
+    <a class="icon-btn" href="library.html" aria-label="말씀 라이브러리">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"/><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/></svg>
+    </a>
+    <button type="button" class="icon-btn" id="themeToggle" aria-label="화면 밝기 바꾸기">
+      <svg class="i-moon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
   </div>
 </header>
 
-<section class="preview" aria-label="미리보기">
-  <div class="preview-frame" id="previewFrame">
-    <div class="preview-scale" id="previewScale"></div>
-  </div>
-  <div class="pager" id="pager" hidden>
-    <button type="button" class="chip" id="pagePrev" aria-label="이전 장">◀</button>
-    <span id="pageLabel" aria-live="polite"></span>
-    <button type="button" class="chip" id="pageNext" aria-label="다음 장">▶</button>
-  </div>
-</section>
+<!-- ───────── 홈 ───────── -->
+<section id="viewHome" class="home" aria-label="홈">
+  <h1 class="home-title">오늘은 어떤 말씀을<br>전해 드릴까요?</h1>
+  <p class="home-sub">카드 유형을 고르면 바로 시작해요</p>
 
-<main class="form">
-  <!-- 절기 카드: 절기 선택 → 템플릿·장식·제목·인사말 예시가 함께 적용됨 -->
-  <div class="field" data-only="season">
-    <label for="season">절기</label>
-    <select id="season" class="wide">
-      <option value="">절기를 선택하세요</option>
-    </select>
-  </div>
-  <div class="field" data-only="season">
-    <label for="seasonTitle">절기 제목 (카드 위쪽 문구)</label>
-    <input id="seasonTitle" type="text" autocomplete="off" placeholder="예: 부활을 축하합니다">
+  <div class="tiles">
+    <button type="button" class="tile tile-visit" data-start="visit">
+      <span class="tile-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/></svg>
+      </span>
+      <span class="tile-text"><strong>심방 카드</strong><span>심방 전후에 보내는<br>따뜻한 한 장</span></span>
+    </button>
+    <button type="button" class="tile tile-season" data-start="season">
+      <span class="tile-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5.6L20 9l-4.3 3.8L17 18.5 12 15.5 7 18.5l1.3-5.7L4 9l5.6-.4z"/></svg>
+      </span>
+      <span class="tile-text"><strong>절기 인사 카드</strong><span>부활절·성탄절·추석<br>11가지 절기</span></span>
+    </button>
   </div>
 
-  <!-- 심방 카드: 상황 선택 → 인사말 예시 -->
-  <div class="field" data-only="visit">
-    <label for="situation">심방 상황</label>
-    <select id="situation" class="wide">
-      <option value="">상황을 선택하세요 (인사말 예시가 나옵니다)</option>
-    </select>
-  </div>
+  <section class="home-block" aria-labelledby="homeSeasonTitle">
+    <h2 class="block-title" id="homeSeasonTitle">절기로 바로 만들기</h2>
+    <div class="hscroll" id="homeSeasons"></div>
+  </section>
 
-  <div class="field">
-    <label for="recipient" id="recipientLabel">받는 분 이름</label>
-    <div class="row">
-      <input id="recipient" type="text" autocomplete="off" list="recentNames" placeholder="예: 김은혜" enterkeyhint="next">
-      <select id="honorific" aria-label="호칭"></select>
-    </div>
-    <input id="honorificCustom" type="text" autocomplete="off" placeholder="호칭을 직접 입력 (예: 청년)" hidden>
-  </div>
+  <section class="home-block" id="homeRecentBlock" aria-labelledby="homeRecentTitle">
+    <h2 class="block-title" id="homeRecentTitle">최근 받는 분</h2>
+    <div class="hscroll" id="homeRecent"></div>
+    <p class="hint" id="homeRecentEmpty">카드를 저장·공유·인쇄하면 여기에 나타나요.</p>
+  </section>
 
-  <div class="field" id="recipient2Field" hidden>
-    <label for="recipient2">함께 받는 분 (배우자 등)</label>
-    <div class="row">
-      <input id="recipient2" type="text" autocomplete="off" list="recentNames" placeholder="예: 유관순" enterkeyhint="next">
-      <select id="honorific2" aria-label="함께 받는 분 호칭"></select>
-    </div>
-    <input id="honorific2Custom" type="text" autocomplete="off" placeholder="호칭을 직접 입력" hidden>
-  </div>
-  <button type="button" class="link-btn" id="toggleRecipient2" aria-expanded="false">+ 함께 받는 분 추가</button>
-
-  <div class="field">
-    <label for="greeting">인사말</label>
-    <textarea id="greeting" rows="3" placeholder="예: 요즘 마음에 자주 떠올라 이 말씀을 함께 보냅니다."></textarea>
-    <div class="suggest" id="greetingSuggest" hidden>
-      <span class="label">인사말 예시 · 눌러서 넣고 자유롭게 고쳐 쓰세요</span>
-      <div class="suggest-list" id="greetingSuggestList"></div>
-    </div>
-  </div>
-
-  <div class="field">
-    <div class="label-row">
-      <label for="verse">말씀 본문</label>
-      <button type="button" class="chip" id="openLibrary">라이브러리에서 선택</button>
-    </div>
-    <textarea id="verse" rows="5" placeholder="말씀 본문을 직접 붙여넣거나 입력해 주세요. 절마다 줄을 바꾸거나 절 번호(1 2 3)를 넣으면 긴 말씀을 절 단위로 나눌 수 있습니다."></textarea>
-
-    <div class="splitbox" id="splitBox" hidden>
-      <p id="splitMsg" class="split-msg"></p>
-      <div class="split-actions">
-        <button type="button" class="chip" id="splitOn">절 단위로 나누기</button>
-        <button type="button" class="chip" id="splitOff" hidden>한 장으로 되돌리기</button>
-        <label class="check" id="pageNoWrap" hidden><input type="checkbox" id="pageNoToggle" checked> 장 번호(1/3) 표시</label>
+  <details class="home-block settings">
+    <summary>설정 · 이 기기에 저장된 정보</summary>
+    <div class="settings-body">
+      <div class="settings-row">
+        <span class="settings-label">화면 밝기</span>
+        <div class="seg seg-3" id="themeSeg" role="group" aria-label="화면 밝기">
+          <button type="button" data-theme-mode="auto" aria-pressed="false">자동</button>
+          <button type="button" data-theme-mode="light" aria-pressed="false">밝게</button>
+          <button type="button" data-theme-mode="dark" aria-pressed="false">어둡게</button>
+        </div>
+      </div>
+      <p class="hint">받는 분 이름과 설정은 이 기기의 브라우저에만 저장되고, 서버로 전송되지 않습니다.</p>
+      <div class="privacy-row">
+        <span id="recentSummary">최근 받는 분 0명</span>
+        <button type="button" class="chip" id="clearRecent">기록 지우기</button>
+      </div>
+      <div class="privacy-row">
+        <span>설정·로고·라이브러리 포함 전체</span>
+        <button type="button" class="chip danger" id="clearAll">모두 초기화</button>
       </div>
     </div>
-  </div>
+  </details>
+</section>
 
-  <div class="field">
-    <label for="ref">출처</label>
-    <div class="row">
-      <input id="ref" type="text" autocomplete="off" placeholder="예: 시편 23:1">
-      <select id="version" aria-label="번역본 표기">
-        <option value="개역개정">개역개정</option>
-        <option value="새번역">새번역</option>
-        <option value="">표기 안 함</option>
+<!-- ───────── 카드 만들기 (내용 → 디자인 → 보내기) ───────── -->
+<section id="viewCreate" class="create" hidden>
+
+  <nav class="steps" aria-label="진행 단계">
+    <button type="button" class="step" data-step-go="1">
+      <span class="step-dot"><span class="dot-num">1</span><svg class="dot-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <span class="step-label">내용</span>
+    </button>
+    <span class="step-line"></span>
+    <button type="button" class="step" data-step-go="2">
+      <span class="step-dot"><span class="dot-num">2</span><svg class="dot-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <span class="step-label">디자인</span>
+    </button>
+    <span class="step-line"></span>
+    <button type="button" class="step" data-step-go="3">
+      <span class="step-dot"><span class="dot-num">3</span><svg class="dot-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <span class="step-label">보내기</span>
+    </button>
+  </nav>
+
+  <section class="preview" aria-label="미리보기">
+    <div class="preview-panel">
+      <div class="preview-frame" id="previewFrame">
+        <div class="preview-scale" id="previewScale"></div>
+      </div>
+      <div class="pager" id="pager" hidden>
+        <button type="button" class="icon-btn small" id="pagePrev" aria-label="이전 장">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <span id="pageLabel" aria-live="polite"></span>
+        <button type="button" class="icon-btn small" id="pageNext" aria-label="다음 장">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1단계 · 내용 -->
+  <div class="panel" data-panel="1">
+    <div class="seg" role="tablist" aria-label="카드 유형">
+      <button type="button" role="tab" id="tab-visit" aria-selected="true" data-type="visit">심방 카드</button>
+      <button type="button" role="tab" id="tab-season" aria-selected="false" data-type="season">절기 인사 카드</button>
+    </div>
+
+    <!-- 절기 카드: 절기 선택 → 템플릿·장식·제목·인사말 예시가 함께 적용됨 -->
+    <div class="field" data-only="season">
+      <label for="season">절기</label>
+      <select id="season" class="wide">
+        <option value="">절기를 선택하세요</option>
       </select>
     </div>
-  </div>
+    <div class="field" data-only="season">
+      <label for="seasonTitle">절기 제목 (카드 위쪽 문구)</label>
+      <input id="seasonTitle" type="text" autocomplete="off" placeholder="예: 부활을 축하합니다">
+    </div>
 
-  <div class="field">
-    <label for="sender">보낸 이</label>
-    <div class="row">
-      <input id="sender" type="text" autocomplete="off" placeholder="예: ○○교회 ○○○ 목사">
-      <select id="closing" aria-label="맺음말">
-        <option value="드림">드림</option>
-        <option value="올림">올림</option>
-        <option value="">표기 안 함</option>
-        <option value="__custom">직접 입력</option>
+    <!-- 심방 카드: 상황 선택 → 인사말 예시 -->
+    <div class="field" data-only="visit">
+      <label for="situation">심방 상황 · 고르면 인사말 예시가 나와요</label>
+      <select id="situation" class="wide">
+        <option value="">상황을 선택하세요</option>
       </select>
     </div>
-    <input id="closingCustom" type="text" autocomplete="off" placeholder="맺음말을 직접 입력 (예: 보냄)" hidden>
-    <p class="hint">받는 분이 연장자이면 "올림"을 고르세요.</p>
-  </div>
 
-  <h2 class="section-title">디자인</h2>
-
-  <div class="field">
-    <span class="label">템플릿</span>
-    <div class="chips" id="tplChips" role="group" aria-label="템플릿"></div>
-  </div>
-
-  <div class="field">
-    <span class="label">크기</span>
-    <div class="chips" id="sizeChips" role="group" aria-label="크기"></div>
-  </div>
-
-  <div class="field">
-    <span class="label">배경색</span>
-    <div class="swatches" id="paletteSwatches" role="group" aria-label="배경색"></div>
-  </div>
-
-  <div class="field">
-    <span class="label">글꼴</span>
-    <div class="chips" id="fontChips" role="group" aria-label="글꼴"></div>
-  </div>
-
-  <div class="field">
-    <span class="label">말씀 글자 크기</span>
-    <div class="stepper">
-      <button type="button" class="chip" id="stepDown" aria-label="글자 작게">가−</button>
-      <span id="stepLabel" aria-live="polite">자동 맞춤</span>
-      <button type="button" class="chip" id="stepUp" aria-label="글자 크게">가+</button>
+    <div class="field">
+      <label for="recipient" id="recipientLabel">받는 분 이름</label>
+      <div class="row">
+        <input id="recipient" type="text" autocomplete="off" list="recentNames" placeholder="예: 김은혜" enterkeyhint="next">
+        <select id="honorific" aria-label="호칭"></select>
+      </div>
+      <input id="honorificCustom" type="text" autocomplete="off" placeholder="호칭을 직접 입력 (예: 청년)" hidden>
+      <div id="recipient2Field" hidden>
+        <label for="recipient2" class="sub-label">함께 받는 분 (배우자 등)</label>
+        <div class="row">
+          <input id="recipient2" type="text" autocomplete="off" list="recentNames" placeholder="예: 유관순" enterkeyhint="next">
+          <select id="honorific2" aria-label="함께 받는 분 호칭"></select>
+        </div>
+        <input id="honorific2Custom" type="text" autocomplete="off" placeholder="호칭을 직접 입력" hidden>
+      </div>
+      <button type="button" class="link-btn" id="toggleRecipient2" aria-expanded="false">+ 함께 받는 분 추가</button>
     </div>
-    <p class="hint">긴 말씀은 칸에 맞게 자동으로 줄어듭니다.</p>
+
+    <div class="field">
+      <label for="greeting">인사말</label>
+      <textarea id="greeting" rows="3" placeholder="예: 요즘 마음에 자주 떠올라 이 말씀을 함께 보냅니다."></textarea>
+      <div class="suggest" id="greetingSuggest" hidden>
+        <span class="label">인사말 예시 · 눌러서 넣고 자유롭게 고쳐 쓰세요</span>
+        <div class="suggest-list" id="greetingSuggestList"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label-row">
+        <label for="verse">말씀 본문</label>
+        <button type="button" class="chip small" id="openLibrary">라이브러리에서 선택</button>
+      </div>
+      <textarea id="verse" rows="5" placeholder="말씀 본문을 직접 붙여넣거나 입력해 주세요. 절마다 줄을 바꾸거나 절 번호(1 2 3)를 넣으면 긴 말씀을 절 단위로 나눌 수 있습니다."></textarea>
+
+      <div class="splitbox" id="splitBox" hidden>
+        <p id="splitMsg" class="split-msg"></p>
+        <div class="split-actions">
+          <button type="button" class="chip" id="splitOn">절 단위로 나누기</button>
+          <button type="button" class="chip" id="splitOff" hidden>한 장으로 되돌리기</button>
+          <label class="check" id="pageNoWrap" hidden><input type="checkbox" id="pageNoToggle" checked> 장 번호(1/3) 표시</label>
+        </div>
+      </div>
+
+      <div class="row ref-row">
+        <input id="ref" type="text" autocomplete="off" placeholder="출처 · 예: 시편 23:1" aria-label="출처">
+        <select id="version" aria-label="번역본 표기">
+          <option value="개역개정">개역개정</option>
+          <option value="새번역">새번역</option>
+          <option value="">표기 안 함</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="sender">보낸 이</label>
+      <div class="row">
+        <input id="sender" type="text" autocomplete="off" placeholder="예: ○○교회 ○○○ 목사">
+        <select id="closing" aria-label="맺음말">
+          <option value="드림">드림</option>
+          <option value="올림">올림</option>
+          <option value="">표기 안 함</option>
+          <option value="__custom">직접 입력</option>
+        </select>
+      </div>
+      <input id="closingCustom" type="text" autocomplete="off" placeholder="맺음말을 직접 입력 (예: 보냄)" hidden>
+      <p class="hint">받는 분이 연장자이면 "올림"을 고르세요.</p>
+    </div>
   </div>
 
-  <div class="field">
-    <span class="label">꾸밈</span>
-    <label class="check"><input type="checkbox" id="decoToggle" checked> 장식 표시</label>
-    <div class="logo-row">
-      <label class="check"><input type="checkbox" id="logoToggle" disabled> 교회 로고 표시</label>
-      <label class="chip file-chip">다른 로고 올리기<input type="file" id="logoFile" accept="image/*" hidden></label>
-      <button type="button" class="chip" id="logoClear" hidden>올린 로고 지우기</button>
+  <!-- 2단계 · 디자인 -->
+  <div class="panel" data-panel="2" hidden>
+    <div class="field">
+      <span class="label">템플릿</span>
+      <div class="chips" id="tplChips" role="group" aria-label="템플릿"></div>
     </div>
-    <p class="hint">지금 로고: <strong id="logoName">기본 로고</strong></p>
-    <div class="logo-options" id="logoOptions" hidden>
-      <span class="label">로고 색</span>
-      <div class="chips" id="logoColorChips" role="group" aria-label="로고 색"></div>
-      <span class="label">로고 크기</span>
-      <div class="chips" id="logoSizeChips" role="group" aria-label="로고 크기"></div>
+
+    <div class="field">
+      <span class="label">크기</span>
+      <div class="chips" id="sizeChips" role="group" aria-label="크기"></div>
     </div>
-    <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "자동"은 밝은 배경에서는 로고 원래 색, 어두운 배경에서는 카드에 어울리는 한 가지 색으로 바꿔 줍니다.</p>
+
+    <div class="field">
+      <span class="label">배경색</span>
+      <div class="swatches" id="paletteSwatches" role="group" aria-label="배경색"></div>
+    </div>
+
+    <div class="field">
+      <span class="label">글꼴</span>
+      <div class="chips" id="fontChips" role="group" aria-label="글꼴"></div>
+    </div>
+
+    <div class="field">
+      <span class="label">말씀 글자 크기</span>
+      <div class="stepper">
+        <button type="button" class="chip" id="stepDown" aria-label="글자 작게">가−</button>
+        <span id="stepLabel" aria-live="polite">자동 맞춤</span>
+        <button type="button" class="chip" id="stepUp" aria-label="글자 크게">가+</button>
+      </div>
+      <p class="hint">긴 말씀은 칸에 맞게 자동으로 줄어듭니다.</p>
+    </div>
+
+    <div class="field">
+      <span class="label">꾸밈</span>
+      <label class="check"><input type="checkbox" id="decoToggle" checked> 장식 표시</label>
+      <div class="logo-row">
+        <label class="check"><input type="checkbox" id="logoToggle" disabled> 교회 로고 표시</label>
+        <label class="chip file-chip">다른 로고 올리기<input type="file" id="logoFile" accept="image/*" hidden></label>
+        <button type="button" class="chip" id="logoClear" hidden>올린 로고 지우기</button>
+      </div>
+      <p class="hint">지금 로고: <strong id="logoName">기본 로고</strong></p>
+      <div class="logo-options" id="logoOptions" hidden>
+        <span class="label">로고 색</span>
+        <div class="chips" id="logoColorChips" role="group" aria-label="로고 색"></div>
+        <span class="label">로고 크기</span>
+        <div class="chips" id="logoSizeChips" role="group" aria-label="로고 크기"></div>
+      </div>
+      <p class="hint">로고는 이 기기에만 저장되고 어디로도 전송되지 않습니다. "자동"은 밝은 배경에서는 로고 원래 색, 어두운 배경에서는 카드에 어울리는 한 가지 색으로 바꿔 줍니다.</p>
+    </div>
   </div>
 
-  <h2 class="section-title">이 기기에 저장된 정보</h2>
-  <div class="field privacy">
-    <p class="hint">받는 분 이름과 설정은 이 기기의 브라우저에만 저장되고, 서버로 전송되지 않습니다.</p>
-    <div class="privacy-row">
-      <span id="recentSummary">최근 받는 분 0명</span>
-      <button type="button" class="chip" id="clearRecent">기록 지우기</button>
+  <!-- 3단계 · 보내기 -->
+  <div class="panel" data-panel="3" hidden>
+    <div class="field summary">
+      <div class="avatar big" id="sumInitial" aria-hidden="true">말</div>
+      <div class="summary-text">
+        <div class="summary-to" id="sumTo">받는 분을 입력해 주세요</div>
+        <div class="summary-from" id="sumFrom">보낸 이를 입력해 주세요</div>
+      </div>
+      <div class="summary-meta" id="sumMeta"></div>
     </div>
-    <div class="privacy-row">
-      <span>설정·로고·라이브러리 포함 전체</span>
-      <button type="button" class="chip danger" id="clearAll">모두 초기화</button>
+
+    <div class="send-tiles">
+      <button type="button" class="btn tile-btn" id="btnSave">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+        이미지 저장
+      </button>
+      <button type="button" class="btn tile-btn" id="btnPrint">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>
+        엽서 인쇄
+      </button>
     </div>
+    <p class="hint center">카카오톡 등으로 바로 보내려면 아래 <strong>공유하기</strong>를 누르세요.<br>공유가 안 되는 환경에서는 "이미지 저장" 후 사진첩에서 보내면 됩니다.</p>
   </div>
-</main>
+
+</section>
+
+</div>
 
 <datalist id="recentNames"></datalist>
 
@@ -227,10 +335,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<footer class="actionbar">
-  <button type="button" class="btn" id="btnSave">이미지 저장</button>
-  <button type="button" class="btn" id="btnPrint">인쇄</button>
-  <button type="button" class="btn primary" id="btnShare">공유하기</button>
+<footer class="stepbar" id="stepbar" hidden>
+  <div class="stepbar-inner">
+    <button type="button" class="btn" id="stepPrev">이전</button>
+    <button type="button" class="btn primary grow" id="stepNext">다음 · 디자인</button>
+    <button type="button" class="btn primary grow" id="btnShare" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/></svg>
+      <span id="shareLabel">공유하기</span>
+    </button>
+  </div>
 </footer>
 
 <script src="js/vendor/modern-screenshot.js"></script>

@@ -137,8 +137,10 @@
   // ── 미리보기 ──
   function fitScale() {
     var size = VerseCard.sizeOf(design);
-    var maxW = Math.min(previewEl.clientWidth - 32, 420);
-    var maxH = Math.max(220, window.innerHeight * 0.4);
+    if (!previewEl.clientWidth) return; // 화면에 보이지 않을 때(홈 화면)는 계산하지 않는다
+    // 좌우 여백(16×2)과 미리보기 상자 안쪽 여백(12×2)을 뺀 폭
+    var maxW = Math.min(previewEl.clientWidth - 56, 420);
+    var maxH = Math.max(200, window.innerHeight * 0.34);
     var scale = Math.min(maxW / size.w, maxH / size.h);
     previewFrame.style.width = Math.round(size.w * scale) + 'px';
     previewFrame.style.height = Math.round(size.h * scale) + 'px';
@@ -173,6 +175,26 @@
     });
     $('recentSummary').textContent = '최근 받는 분 ' + list.length + '명';
     $('clearRecent').disabled = list.length === 0;
+    renderHomeRecent(list);
+  }
+
+  // 홈 화면의 "최근 받는 분": 누르면 이름과 호칭이 채워진 채로 내용 입력 단계로 간다.
+  function renderHomeRecent(list) {
+    var box = $('homeRecent');
+    box.replaceChildren();
+    list.forEach(function (r) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pill person';
+      b.dataset.name = r.name;
+      var av = document.createElement('span');
+      av.className = 'avatar';
+      av.textContent = r.name.charAt(0);
+      b.appendChild(av);
+      b.appendChild(document.createTextNode(r.name + (r.honorific ? ' ' + r.honorific : '')));
+      box.appendChild(b);
+    });
+    $('homeRecentEmpty').hidden = list.length > 0;
   }
 
   function rememberRecipients(data) {
@@ -218,8 +240,94 @@
     fitScale();
     updateStepLabel();
     updateSplitUi(data, fit, pages);
+    state.pagesCount = pages.length;
+    updateSummary();
     prewarm();
     return fit;
+  }
+
+  // ── 화면 이동: 홈 → 내용 → 디자인 → 보내기 ──
+  var STEP_NEXT_LABEL = { 1: '다음 · 디자인', 2: '다음 · 보내기' };
+  var ui = { view: 'home', step: 1 };
+
+  function setView(view, opts) {
+    ui.view = view;
+    document.body.dataset.view = view;
+    $('viewHome').hidden = view !== 'home';
+    $('viewCreate').hidden = view !== 'create';
+    $('stepbar').hidden = view !== 'create';
+    // 기기의 뒤로 가기 버튼으로 홈에 돌아올 수 있게 기록을 남긴다.
+    if (view === 'create' && !(opts && opts.fromPop)) {
+      try { history.pushState({ view: 'create' }, ''); } catch (e) { /* 무시 */ }
+    }
+    if (view === 'create') setStep(ui.step || 1); else { window.scrollTo(0, 0); }
+  }
+
+  function setStep(n) {
+    ui.step = Math.max(1, Math.min(3, n));
+    document.querySelectorAll('[data-panel]').forEach(function (p) {
+      p.hidden = Number(p.dataset.panel) !== ui.step;
+    });
+    document.querySelectorAll('[data-step-go]').forEach(function (b) {
+      var k = Number(b.dataset.stepGo);
+      b.classList.toggle('done', k < ui.step);
+      b.classList.toggle('current', k === ui.step);
+      if (k === ui.step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+    var lines = document.querySelectorAll('.step-line');
+    lines.forEach(function (l, i) { l.classList.toggle('done', ui.step > i + 1); });
+
+    $('stepPrev').textContent = ui.step === 1 ? '홈' : '이전';
+    $('stepNext').hidden = ui.step === 3;
+    $('btnShare').hidden = ui.step !== 3;
+    if (STEP_NEXT_LABEL[ui.step]) $('stepNext').textContent = STEP_NEXT_LABEL[ui.step];
+    window.scrollTo(0, 0);
+    render(); // 화면에 보이게 된 뒤에 미리보기 크기를 다시 맞춘다
+  }
+
+  // 보내기 단계의 요약(받는 분·보낸 이·크기·장 수)
+  function updateSummary() {
+    var d = readData();
+    var names = [[d.recipient, d.honorific], [d.recipient2, d.honorific2]]
+      .filter(function (p) { return (p[0] || '').trim(); })
+      .map(function (p) { return p[0].trim() + ' ' + (p[1] || ''); });
+    $('sumTo').textContent = names.length ? names.join(' · ') + '께' : '받는 분 없이 만들어요';
+    $('sumInitial').textContent = names.length ? names[0].trim().charAt(0) : '말';
+    var sender = (d.sender || '').trim();
+    $('sumFrom').textContent = sender ? sender + (d.closing ? ' ' + d.closing : '') : '보낸 이를 입력하지 않았어요';
+    var n = state.pagesCount || 1;
+    $('sumMeta').textContent = VerseCard.sizeOf(design).name + '\n' + n + '장';
+    $('shareLabel').textContent = n > 1 ? n + '장 한 번에 공유하기' : '공유하기';
+  }
+
+  // 홈 화면: 절기 바로가기
+  function buildHomeSeasons() {
+    var box = $('homeSeasons');
+    config.seasons.forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pill';
+      b.dataset.season = s.id;
+      var dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.style.background = s.colors.accent;
+      b.appendChild(dot);
+      b.appendChild(document.createTextNode(s.name));
+      box.appendChild(b);
+    });
+  }
+
+  function startCard(type) {
+    setType(type);
+    ui.step = 1;
+    setView('create');
+  }
+
+  function syncThemeSeg() {
+    var mode = VerseTheme.get();
+    document.querySelectorAll('#themeSeg [data-theme-mode]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.themeMode === mode));
+    });
   }
 
   // 긴 말씀 나누기 안내·버튼, 장 이동
@@ -408,7 +516,7 @@
   function setType(type) {
     state.type = type;
     VerseStore.set('type', type);
-    document.querySelectorAll('.seg button').forEach(function (b) {
+    document.querySelectorAll('.seg [data-type]').forEach(function (b) {
       b.setAttribute('aria-selected', String(b.dataset.type === type));
     });
     document.querySelectorAll('[data-only]').forEach(function (n) {
@@ -672,9 +780,50 @@
   }
 
   function bindEvents() {
-    document.querySelectorAll('.seg button').forEach(function (b) {
+    document.querySelectorAll('.seg [data-type]').forEach(function (b) {
       b.addEventListener('click', function () { setType(b.dataset.type); });
     });
+
+    // 홈: 카드 유형 / 절기 바로가기 / 최근 받는 분
+    document.querySelectorAll('[data-start]').forEach(function (b) {
+      b.addEventListener('click', function () { startCard(b.dataset.start); });
+    });
+    $('homeSeasons').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-season]');
+      if (!b) return;
+      setType('season');
+      applySeason(b.dataset.season);
+      ui.step = 1;
+      setView('create');
+    });
+    $('homeRecent').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-name]');
+      if (!b) return;
+      $('recipient').value = b.dataset.name;
+      applyRecentHonorific('recipient', 'honorific', 'honorificCustom');
+      ui.step = 1;
+      setView('create');
+    });
+    $('brandHome').addEventListener('click', function () { setView('home'); });
+
+    // 단계 이동
+    document.querySelectorAll('[data-step-go]').forEach(function (b) {
+      b.addEventListener('click', function () { setStep(Number(b.dataset.stepGo)); });
+    });
+    $('stepPrev').addEventListener('click', function () {
+      if (ui.step === 1) setView('home'); else setStep(ui.step - 1);
+    });
+    $('stepNext').addEventListener('click', function () { setStep(ui.step + 1); });
+    window.addEventListener('popstate', function () {
+      if (ui.view === 'create') setView('home', { fromPop: true });
+    });
+
+    // 화면 밝기
+    $('themeToggle').addEventListener('click', function () { VerseTheme.toggle(); syncThemeSeg(); });
+    document.querySelectorAll('#themeSeg [data-theme-mode]').forEach(function (b) {
+      b.addEventListener('click', function () { VerseTheme.set(b.dataset.themeMode); syncThemeSeg(); });
+    });
+    document.addEventListener('themechange', syncThemeSeg);
 
     $('btnPrint').addEventListener('click', openPrint);
     $('printClose').addEventListener('click', function () { $('printDialog').close(); });
@@ -807,6 +956,9 @@
     $('season').value = design.season || '';
     if (state.type === 'season' && design.season) $('seasonTitle').value = byId(config.seasons, design.season).title;
     setType(state.type);
+    buildHomeSeasons();
+    syncThemeSeg();
+    setView('home');
     // 로고 모양 마스크가 준비되면 테마 색으로 다시 그린다.
     prepareLogo().then(function () { syncControls(); render(); });
   }
