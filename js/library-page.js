@@ -118,9 +118,27 @@
     return li;
   }
 
+  // 백업 상태 안내: 입력한 내용은 이 브라우저에만 있으므로, 백업하지 않았거나 백업 뒤에 고쳤으면 알려 준다.
+  function renderBackupNote() {
+    var note = $('backupNote');
+    if (!VerseLibrary.filledCount()) { note.hidden = true; return; }
+    var st = VerseLibrary.backupStatus();
+    var when = st.at ? new Date(st.at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    note.classList.toggle('ok', !st.never && !st.stale);
+    if (st.never) {
+      $('backupText').textContent = '아직 백업하지 않았습니다. 입력한 말씀은 이 브라우저에만 저장되어서, 브라우저 기록·사이트 데이터를 지우거나 시크릿(비공개) 창을 쓰면 사라질 수 있습니다.';
+    } else if (st.stale) {
+      $('backupText').textContent = '마지막 백업(' + when + ') 이후에 고친 내용이 있습니다. 다시 백업해 두세요.';
+    } else {
+      $('backupText').textContent = '마지막 백업: ' + when + ' · 이후 변경 없음';
+    }
+    note.hidden = false;
+  }
+
   function renderSummary() {
     var all = VerseLibrary.list();
     $('summary').textContent = '전체 ' + all.length + '개 중 ' + VerseLibrary.filledCount() + '개 입력됨';
+    renderBackupNote();
   }
 
   function render() {
@@ -219,7 +237,9 @@
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
-    toast('파일로 내보냈습니다.');
+    VerseLibrary.markExported();
+    renderBackupNote();
+    toast('파일로 내보냈습니다. 다운로드 폴더를 확인해 보세요.');
   }
 
   function onImport() {
@@ -248,6 +268,9 @@
     $('undoBtn').addEventListener('click', onUndo);
     updateUndo();
     $('exportBtn').addEventListener('click', onExport);
+    $('backupNow').addEventListener('click', onExport);
+    // 브라우저가 이 앱의 저장 공간을 임의로 정리하지 않도록 요청한다(지원하는 브라우저에서만 의미가 있음).
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
     $('importFile').addEventListener('change', onImport);
     render();
   }

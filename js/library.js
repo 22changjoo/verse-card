@@ -39,7 +39,21 @@
   var base = [];
   var data = { texts: {}, custom: [] };
 
-  function persist() { return global.VerseStore.set(STORE_KEY, data); }
+  // 저장할 때마다 "마지막으로 고친 시각"을 남겨, 백업한 뒤에 바뀐 내용이 있는지 알려 줄 수 있게 한다.
+  function persist() {
+    var ok = global.VerseStore.set(STORE_KEY, data);
+    global.VerseStore.set('libraryEditedAt', new Date().toISOString());
+    return ok;
+  }
+
+  function markExported() { global.VerseStore.set('libraryExportedAt', new Date().toISOString()); }
+
+  // 백업 상태: { never, stale, at }  (never: 한 번도 백업 안 함 / stale: 백업 뒤에 고친 내용이 있음)
+  function backupStatus() {
+    var exp = global.VerseStore.get('libraryExportedAt', null);
+    var edit = global.VerseStore.get('libraryEditedAt', null);
+    return { never: !exp, stale: !!exp && !!edit && edit > exp, at: exp };
+  }
 
   function load() {
     return fetch('data/verses.json')
@@ -239,6 +253,8 @@
     restoreBackup: restoreBackup,
     filledCount: filledCount,
     exportJson: exportJson,
-    importJson: importJson
+    importJson: importJson,
+    markExported: markExported,
+    backupStatus: backupStatus
   };
 })(window);
