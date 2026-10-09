@@ -93,6 +93,9 @@
 
   function ensureToken(interactive) {
     if (state.token && Date.now() < state.tokenExp) return Promise.resolve(state.token);
+    // 자동 동기화는 로그인 창을 띄우지 않는다(구글 로그인 창이 깜빡이며 열렸다 닫히는 것을 막기 위해).
+    // 토큰이 없으면 '연결 필요' 상태로 두고, 사용자가 직접 누를 때 로그인한다.
+    if (!interactive) return Promise.reject(codeErr('auth', ''));
     return acquireToken(interactive);
   }
 
