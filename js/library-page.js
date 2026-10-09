@@ -141,9 +141,62 @@
     renderSummary();
   }
 
+  // 중복 정리: 무엇을 할지 먼저 보여 주고, 확인하면 정리한다. (정리 전 상태는 되돌릴 수 있음)
+  function onDedupe() {
+    var plan = VerseLibrary.planDedupe();
+    if (!plan.remove.length && !plan.conflicts.length) { toast('중복된 말씀이 없습니다.'); return; }
+
+    var lines = [];
+    if (plan.remove.length) {
+      lines.push('정리할 중복: ' + plan.remove.length + '건');
+      plan.remove.slice(0, 10).forEach(function (r) { lines.push(' · ' + r.ref + ' — ' + r.why); });
+      if (plan.remove.length > 10) lines.push(' · 외 ' + (plan.remove.length - 10) + '건');
+    }
+    if (plan.conflicts.length) {
+      if (lines.length) lines.push('');
+      lines.push('본문이 서로 달라서 지우지 않고 남겨 두는 것: ' + plan.conflicts.length + '건');
+      plan.conflicts.slice(0, 6).forEach(function (c) { lines.push(' · ' + c.ref); });
+      lines.push('(직접 확인하고 필요 없는 쪽을 삭제해 주세요)');
+    }
+    if (!plan.remove.length) { alert(lines.join('\n')); return; }
+    lines.push('');
+    lines.push('정리한 뒤에도 "정리 되돌리기"로 이전 상태로 돌아갈 수 있습니다.');
+    if (!confirm(lines.join('\n') + '\n\n정리할까요?')) return;
+
+    var res = VerseLibrary.applyDedupe(plan);
+    toast('중복 ' + res.removed + '건을 정리했습니다.' + (res.conflicts ? ' (본문이 다른 ' + res.conflicts + '건은 남겨 둠)' : ''));
+    updateUndo();
+    render();
+  }
+
+  function onUndo() {
+    if (!confirm('중복 정리 전 상태로 되돌릴까요?\n정리한 뒤에 입력하거나 고친 내용은 사라집니다.')) return;
+    if (VerseLibrary.restoreBackup()) toast('정리 전 상태로 되돌렸습니다.');
+    updateUndo();
+    render();
+  }
+
+  function updateUndo() { $('undoBtn').hidden = !VerseLibrary.hasBackup(); }
+
   function onAdd() {
     var ref = $('addRef').value.trim();
     if (!ref) { toast('장절을 입력해 주세요.'); return; }
+
+    // 같은 말씀이 이미 있으면 새로 만들지 않는다.
+    var dup = VerseLibrary.findByRef(ref);
+    if (dup) {
+      var text = $('addText').value;
+      if (text.trim() && !dup.text.trim()) {
+        VerseLibrary.setText(dup.id, text);
+        toast('"' + dup.ref + '"은(는) 이미 목록에 있어서, 그 항목에 본문을 채웠습니다.');
+        $('addRef').value = ''; $('addText').value = ''; $('addBox').open = false;
+        render();
+      } else {
+        toast('"' + dup.ref + '"은(는) 이미 목록에 있습니다. 목록에서 찾아 수정해 주세요.');
+      }
+      return;
+    }
+
     VerseLibrary.addCustom({ ref: ref, theme: addThemes.slice(), text: $('addText').value });
     $('addRef').value = '';
     $('addText').value = '';
@@ -191,6 +244,9 @@
     buildThemeChips();
     $('filledOnly').addEventListener('change', function () { state.filledOnly = this.checked; render(); });
     $('addBtn').addEventListener('click', onAdd);
+    $('dedupeBtn').addEventListener('click', onDedupe);
+    $('undoBtn').addEventListener('click', onUndo);
+    updateUndo();
     $('exportBtn').addEventListener('click', onExport);
     $('importFile').addEventListener('change', onImport);
     render();
