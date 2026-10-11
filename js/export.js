@@ -76,7 +76,7 @@
       var cs = getComputedStyle(n);
       families[cs.fontFamily.split(',')[0].replace(/["']/g, '').trim()] = true;
       var w = parseInt(cs.fontWeight, 10) || 400;
-      weights[w >= 600 ? 700 : (w === 500 ? 500 : 400)] = true;
+      weights[w >= 800 ? 900 : (w >= 600 ? 700 : (w === 500 ? 500 : 400))] = true;
     });
     var chars = {};
     (card.textContent || '').split('').forEach(function (ch) { chars[ch.charCodeAt(0)] = true; });
@@ -117,7 +117,7 @@
       if (document.fonts && document.fonts.load) {
         var text = card.textContent || ' ';
         var serif = firstFamily(card, '.verse');
-        var jobs = [document.fonts.load("400 24px 'Noto Sans KR'", text)];
+        var jobs = [document.fonts.load("400 24px 'Noto Sans KR'", text), document.fonts.load("900 24px 'Noto Sans KR'", text)];
         if (serif) {
           jobs.push(document.fonts.load('400 40px ' + serif, text));
           jobs.push(document.fonts.load('700 40px ' + serif, text));

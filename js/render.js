@@ -37,6 +37,10 @@
       layer: '<div class="blob b1"></div><div class="blob b2"></div>',
       icon: '<div class="bar"></div>'
     },
+    emfade: { layer: '', icon: '' },
+    embracket: { layer: '<div class="grain"></div>', icon: '' },
+    emmarker: { layer: '<div class="frame-a"></div><div class="frame-b"></div>', icon: '' },
+    emgold: { layer: '<div class="gold-t"></div><div class="gold-b"></div>', icon: '' },
     paper: {
       layer: '<div class="grain"></div><div class="frame-a"></div>',
       // 펼친 성경책(Lucide book-open)
@@ -98,6 +102,19 @@
     return grainUrl;
   }
 
+  // 말씀 속 강조 표시: **구절** 또는 [구절] → [{ t, em }]
+  function parseEmphasis(text) {
+    var out = [], re = /\*\*([^*]+?)\*\*|\[([^\[\]]+?)\]/g, last = 0, m;
+    function plain(str) { return str.replace(/\*\*/g, ''); }
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push({ t: plain(text.slice(last, m.index)), em: false });
+      out.push({ t: m[1] != null ? m[1] : m[2], em: true });
+      last = re.lastIndex;
+    }
+    if (last < text.length) out.push({ t: plain(text.slice(last)), em: false });
+    return out;
+  }
+
   function byId(list, id) {
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
@@ -147,9 +164,26 @@
       '--ai': tpl.align === 'left' ? 'flex-start' : 'center',
       '--ta': tpl.align === 'left' ? 'left' : 'center'
     };
+    if (!pal && c.mark) vars['--mark'] = c.mark; // 형광펜 색(배경색을 따로 고르면 강조색에서 만든다)
     Object.keys(vars).forEach(function (k) { card.style.setProperty(k, vars[k]); });
     card.style.width = size.w + 'px';
     card.style.height = size.h + 'px';
+  }
+
+  // 말씀 본문. 강조형 템플릿이고 강조 표시가 있으면 앞·강조·뒤 세 덩어리로 나누고, 아니면 표시만 지운 보통 글로 쓴다.
+  function buildVerse(text, tpl) {
+    var segs = parseEmphasis(text);
+    var hasEm = !!tpl.emphasis && segs.some(function (s) { return s.em; });
+    if (!hasEm) return el('div', 'verse', segs.map(function (s) { return s.t; }).join(''));
+    var verse = el('div', 'verse has-em');
+    segs.forEach(function (s) {
+      var t = s.t.replace(/^\s+|\s+$/g, '');
+      if (!t) return;
+      var block = el('div', s.em ? 'ev-seg ev-em' : 'ev-seg ev-dim');
+      if (s.em) block.appendChild(el('span', 'ev-in', t)); else block.textContent = t;
+      verse.appendChild(block);
+    });
+    return verse;
   }
 
   function renderCard(data, design) {
@@ -194,7 +228,7 @@
 
     var body = el('div', 'body');
     body.appendChild(el('div', 'rule'));
-    body.appendChild(el('div', 'verse', (data.verse || '').trim()));
+    body.appendChild(buildVerse((data.verse || '').trim(), tpl));
     var ref = refLine(data);
     if (ref) body.appendChild(el('div', 'ref', ref));
     if (data.pageLabel) body.appendChild(el('div', 'pageno', data.pageLabel));
@@ -266,6 +300,7 @@
     themeColors: themeColors,
     sizeOf: sizeOf,
     renderCard: renderCard,
-    fitCard: fitCard
+    fitCard: fitCard,
+    parseEmphasis: parseEmphasis
   };
 })(window);

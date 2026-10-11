@@ -15,7 +15,7 @@
 <script src="js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/templates.css">
 </head>
@@ -247,9 +247,13 @@
     <div class="field">
       <div class="label-row">
         <label for="verse">말씀 본문</label>
-        <button type="button" class="chip small" id="openLibrary">라이브러리에서 선택</button>
+        <div class="label-actions">
+          <button type="button" class="chip small" id="emphasizeBtn" title="말씀에서 강조할 구절을 고른 뒤 누르세요">선택한 구절 강조</button>
+          <button type="button" class="chip small" id="openLibrary">라이브러리에서 선택</button>
+        </div>
       </div>
       <textarea id="verse" rows="5" placeholder="말씀 본문을 직접 붙여넣거나 입력해 주세요. 절마다 줄을 바꾸거나 절 번호(1 2 3)를 넣으면 긴 말씀을 절 단위로 나눌 수 있습니다."></textarea>
+      <p class="hint">강조할 구절은 <strong>**별표 두 개**</strong>나 <strong>[대괄호]</strong>로 감싸세요. "강조" 템플릿에서 크게 나오고, 다른 템플릿에서는 표시만 사라집니다.</p>
 
       <div class="splitbox" id="splitBox" hidden>
         <p id="splitMsg" class="split-msg"></p>

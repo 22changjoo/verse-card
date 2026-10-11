@@ -63,7 +63,12 @@
   // 입력이 비어 있을 때 미리보기에 보여줄 안내 문구
   function withPlaceholders(data) {
     var d = Object.assign({}, data);
-    if (!d.verse.trim()) d.verse = '말씀 본문을 입력하면\n이곳에 표시됩니다.';
+    if (!d.verse.trim()) {
+      var tpl = byId(config.templates, design.template);
+      d.verse = tpl && tpl.emphasis
+        ? '앞부분 말씀이 이곳에\n**강조할 구절을\n크게 보여줘요**\n뒷부분 말씀'
+        : '말씀 본문을 입력하면\n이곳에 표시됩니다.';
+    }
     return d;
   }
 
@@ -1080,6 +1085,16 @@
     $('pagePrev').addEventListener('click', function () { state.page -= 1; render(); });
     $('pageNext').addEventListener('click', function () { state.page += 1; render(); });
     $('openLibrary').addEventListener('click', openLibrary);
+    // 말씀에서 고른 구절을 **로 감싸 강조 표시한다.
+    $('emphasizeBtn').addEventListener('click', function () {
+      var ta = $('verse'), a = ta.selectionStart, b = ta.selectionEnd;
+      if (a === b) { toast('말씀에서 강조할 구절을 먼저 드래그해서 골라 주세요.'); return; }
+      var sel = ta.value.slice(a, b);
+      var m = sel.match(/^(\s*)([\s\S]*?)(\s*)$/); // 앞뒤 공백은 표시 밖에 둔다
+      ta.value = ta.value.slice(0, a) + m[1] + '**' + m[2] + '**' + m[3] + ta.value.slice(b);
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.focus();
+    });
     $('libClose').addEventListener('click', function () { $('libDialog').close(); });
     $('libThemes').addEventListener('click', function (e) {
       var b = e.target.closest('[data-value]');

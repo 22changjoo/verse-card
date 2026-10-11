@@ -131,3 +131,43 @@
 .tpl-paper .grain { position: absolute; inset: 0; background-size: 256px 256px; image-rendering: pixelated; }
 .tpl-paper .frame-a { position: absolute; inset: 60px; border: 2px solid var(--line); opacity: 0.5; }
 .tpl-paper .icon svg { height: 64px; }
+
+/* ───── 강조형 공통: 말씀 속 **강조 구절**(또는 [강조 구절])을 앞·강조·뒤 덩어리로 나눠 보여 준다 ───── */
+.tpl-emfade .icon, .tpl-embracket .icon, .tpl-emmarker .icon, .tpl-emgold .icon,
+.tpl-emfade .rule, .tpl-embracket .rule, .tpl-emmarker .rule, .tpl-emgold .rule { display: none; }
+.card .verse.has-em { display: flex; flex-direction: column; gap: 0.3em; }
+.card .verse.has-em .ev-seg { width: 100%; box-sizing: border-box; white-space: pre-line; }
+
+/* 강조 1 · 흐림과 굵게: 앞뒤는 연한 회색, 강조 구절은 아주 굵게 */
+.tpl-emfade .verse.has-em .ev-dim { color: color-mix(in srgb, var(--ink) 26%, var(--bg)); }
+.tpl-emfade .verse.has-em .ev-em { font-weight: 900; font-size: 1.25em; color: var(--ink); margin: 0.1em 0; }
+
+/* 강조 2 · 대괄호 (미색 종이 질감) */
+.tpl-embracket .grain { position: absolute; inset: 0; background-size: 256px 256px; image-rendering: pixelated; }
+.tpl-embracket .verse.has-em { gap: 0.4em; }
+.tpl-embracket .verse.has-em .ev-dim { font-weight: 400; color: color-mix(in srgb, var(--ink) 88%, var(--bg)); }
+.tpl-embracket .verse.has-em .ev-em {
+  position: relative; padding: 0.15em 1em; margin: 0.3em 0;
+  font-family: var(--sans); font-weight: 900; font-size: 1.08em; color: var(--ink);
+}
+.tpl-embracket .verse.has-em .ev-em::before, .tpl-embracket .verse.has-em .ev-em::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 0.5em; box-sizing: border-box; border: 0.17em solid var(--ink);
+}
+.tpl-embracket .verse.has-em .ev-em::before { left: 0; border-right: 0; }
+.tpl-embracket .verse.has-em .ev-em::after { right: 0; border-left: 0; }
+
+/* 강조 3 · 형광펜 */
+.tpl-emmarker .frame-a { position: absolute; inset: 56px; border: 2px solid var(--line); }
+.tpl-emmarker .frame-b { position: absolute; inset: 72px; border: 2px solid color-mix(in srgb, var(--line) 45%, transparent); }
+.tpl-emmarker .verse.has-em .ev-em { font-weight: 700; font-size: 1.2em; margin: 0.15em 0; }
+.tpl-emmarker .verse.has-em .ev-in {
+  background: linear-gradient(transparent 58%, var(--mark, color-mix(in srgb, var(--accent) 35%, transparent)) 58%);
+  padding: 0 0.2em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* 강조 4 · 금빛 (네이비) */
+.tpl-emgold .gold-t, .tpl-emgold .gold-b { position: absolute; left: 72px; right: 72px; height: 2px; background: var(--accent); opacity: 0.6; }
+.tpl-emgold .gold-t { top: 72px; }
+.tpl-emgold .gold-b { bottom: 72px; }
+.tpl-emgold .verse.has-em .ev-dim { color: color-mix(in srgb, var(--ink) 34%, var(--bg)); }
+.tpl-emgold .verse.has-em .ev-em { font-weight: 900; font-size: 1.25em; color: var(--accent); margin: 0.1em 0; }
