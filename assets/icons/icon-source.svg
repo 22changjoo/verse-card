@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbf8f1"/><stop offset="1" stop-color="#efe8d8"/></linearGradient>
+ <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf9"/><stop offset="0.55" stop-color="#f6f1e6"/><stop offset="1" stop-color="#e6dfcf"/></linearGradient>
+ <linearGradient id="spine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e2dac7"/><stop offset="0.5" stop-color="#fbf8f0"/><stop offset="1" stop-color="#f1ebdd"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbe9a6"/><stop offset="0.45" stop-color="#e8c66a"/><stop offset="1" stop-color="#c99a2e"/></linearGradient>
+ <linearGradient id="goldv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dc8c"/><stop offset="1" stop-color="#cf9f35"/></linearGradient>
+ <linearGradient id="pages" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f1e2"/><stop offset="1" stop-color="#e9e1cd"/></linearGradient>
+ <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur stdDeviation="22"/></filter>
+ <clipPath id="cv"><rect x="225" y="160" width="560" height="620" rx="78"/></clipPath>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g transform="translate(512 512) scale(0.9) translate(-517 -520)">
+ <ellipse cx="520" cy="880" rx="270" ry="34" fill="#8a7447" opacity="0.28" filter="url(#sh)"/>
+ <rect x="235" y="175" width="570" height="700" rx="95" fill="#e8e0cd"/>
+ <rect x="270" y="720" width="520" height="150" rx="70" fill="url(#pages)" stroke="#d6a93a" stroke-width="9"/>
+ <rect x="296" y="742" width="470" height="106" rx="52" fill="none" stroke="#e4c46f" stroke-width="5" opacity="0.8"/>
+ <rect x="225" y="160" width="560" height="620" rx="78" fill="url(#cover)"/>
+ <g clip-path="url(#cv)">
+  <rect x="225" y="160" width="100" height="640" fill="url(#spine)"/>
+  <rect x="318" y="160" width="9" height="640" fill="#ffffff" opacity="0.7"/>
+ </g>
+ <rect x="226" y="161" width="558" height="618" rx="77" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.7"/>
+ <g transform="translate(508 436) scale(1.12) translate(-508 -436)"><polygon points="473,250 543,250 543,342 640,342 640,412 543,412 543,622 473,622 473,412 376,412 376,342 473,342" fill="url(#gold)" stroke="#c4952c" stroke-width="12" stroke-linejoin="round"/>
+ <polygon points="478,262 538,262 538,347 628,347 628,407 538,407 538,611 478,611 478,407 388,407 388,347 478,347" fill="none" stroke="#fff3c4" stroke-width="5" stroke-linejoin="round" opacity="0.75"/></g>
+ <polygon points="338,745 432,745 432,885 385,848 338,885" fill="url(#goldv)" stroke="#c4952c" stroke-width="8" stroke-linejoin="round"/>
+ <polyline points="352,760 352,860" fill="none" stroke="#fff3c4" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+</g>
+</svg>
