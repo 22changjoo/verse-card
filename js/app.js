@@ -785,6 +785,8 @@
       design.template = b.dataset.value;
       design.userPickedTemplate = true;
       syncControls(); saveDesign(); render();
+      // 사진 템플릿을 고르면 바로 아래에 나타나는 사진 칸이 화면 밖이면 보이는 곳으로 옮긴다.
+      if (!$('photoField').hidden) $('photoField').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
 
     var sizeBox = $('sizeChips');
