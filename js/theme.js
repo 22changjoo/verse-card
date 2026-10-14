@@ -7,8 +7,8 @@
   'use strict';
 
   var KEY = 'verseCard.theme';
-  var DARK_BAR = '#0b1020';
-  var LIGHT_BAR = '#f5f2e8';
+  var DARK_BAR = '#090d1d';
+  var LIGHT_BAR = '#eef4fd';
   var mq = global.matchMedia ? global.matchMedia('(prefers-color-scheme: dark)') : null;
 
   function read() {

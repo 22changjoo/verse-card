@@ -1,39 +1,39 @@
 /*
- * 앱 화면 스타일 — 라이트(밝은 종이색 + 초록)와 다크(짙은 남색 + 금색)를 색 토큰으로 바꿔 쓴다.
+ * 앱 화면 스타일 — 라이트(연한 하늘색 + 파랑)와 다크(짙은 남색 + 파랑)를 색 토큰으로 바꿔 쓴다.
  * 카드 자체(.card)의 색은 templates.css가 따로 정하므로 앱 밝기와 상관없이 같은 모양으로 저장된다.
  */
 :root {
   color-scheme: light;
-  --bg: #f5f2e8;
-  --bg-image: none;
+  --bg: #eef4fd;
+  --bg-image: linear-gradient(180deg, #f3f7fe 0%, #e8f0fc 100%);
   --surface: #ffffff;
-  --surface-2: #f0ecdf;
-  --surface-3: #e4e0d1;
-  --ink: #232a1f;
-  --muted: #6f7767;
-  --line: #e4e0d1;
-  --line-strong: #cfcab5;
-  --primary: #2f8a3c;
+  --surface-2: #f1f5fd;
+  --surface-3: #e2eaf8;
+  --ink: #141a33;
+  --muted: #66728f;
+  --line: #e0e8f6;
+  --line-strong: #c7d3ea;
+  --primary: #2f6bf0;
   --primary-ink: #ffffff;
-  --primary-soft: #e3eed4;
-  --primary-shadow: rgba(47, 138, 60, 0.32);
-  --focus: #0072ba;
-  --danger: #a33b32;
-  --danger-line: #e0b9b4;
-  --warn-bg: #fff4e0;
-  --warn-line: #e6c98f;
+  --primary-soft: #e3ecff;
+  --primary-shadow: rgba(47, 107, 240, 0.32);
+  --focus: #2f6bf0;
+  --danger: #c23a3a;
+  --danger-line: #efbcbc;
+  --warn-bg: #fff6e3;
+  --warn-line: #ecd197;
   --warn-ink: #5a4320;
-  --ok-bg: #eef5ea;
-  --ok-line: #bcd3b2;
-  --ok-ink: #35502c;
-  --preview-bg: linear-gradient(160deg, #e3eed4 0%, #dbe9ef 100%);
-  --tile-a: linear-gradient(160deg, #e3eed4 0%, #f3f7ea 100%);
-  --tile-a-line: #c9dbb2;
-  --tile-b: linear-gradient(160deg, #dbe9ef 0%, #eef4f8 100%);
-  --tile-b-line: #bcd3df;
-  --shadow: 0 8px 24px rgba(60, 56, 30, 0.07);
-  --shadow-lg: 0 14px 30px rgba(40, 60, 30, 0.22);
-  --scrim: rgba(0, 0, 0, 0.4);
+  --ok-bg: #e8f6ee;
+  --ok-line: #b6dcc5;
+  --ok-ink: #25583a;
+  --preview-bg: linear-gradient(160deg, #dbe7ff 0%, #e7e3ff 100%);
+  --tile-a: linear-gradient(150deg, #3f86ff 0%, #5a5ff0 100%);
+  --tile-a-line: transparent;
+  --tile-b: linear-gradient(150deg, #243060 0%, #121a3d 100%);
+  --tile-b-line: transparent;
+  --shadow: 0 8px 24px rgba(40, 70, 150, 0.10);
+  --shadow-lg: 0 14px 30px rgba(30, 60, 160, 0.26);
+  --scrim: rgba(8, 14, 40, 0.45);
   --radius: 18px;
   --radius-lg: 28px;
   --stepbar-h: 92px;
@@ -45,33 +45,33 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0b1020;
-  --bg-image: linear-gradient(180deg, #0b1020 0%, #111a36 100%);
-  --surface: #141c36;
-  --surface-2: #1b2442;
-  --surface-3: #263158;
-  --ink: #e9edf8;
-  --muted: #8e98b6;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.22);
-  --primary: #e3bb6b;
-  --primary-ink: #1a1f33;
-  --primary-soft: rgba(227, 187, 107, 0.14);
-  --primary-shadow: rgba(227, 187, 107, 0.3);
-  --focus: #e3bb6b;
-  --danger: #ff9a90;
-  --danger-line: rgba(255, 154, 144, 0.4);
-  --warn-bg: rgba(227, 187, 107, 0.12);
-  --warn-line: rgba(227, 187, 107, 0.35);
-  --warn-ink: #f2dfb2;
-  --ok-bg: rgba(120, 192, 72, 0.12);
-  --ok-line: rgba(120, 192, 72, 0.35);
-  --ok-ink: #c8e6b4;
-  --preview-bg: linear-gradient(160deg, #1a2447 0%, #10172e 100%);
-  --tile-a: linear-gradient(160deg, #2b3566 0%, #18213f 100%);
-  --tile-a-line: rgba(227, 187, 107, 0.4);
-  --tile-b: linear-gradient(160deg, #4a3a8f 0%, #242a5c 100%);
-  --tile-b-line: rgba(255, 255, 255, 0.14);
+  --bg: #090d1d;
+  --bg-image: linear-gradient(180deg, #090d1d 0%, #0f1630 100%);
+  --surface: #131a33;
+  --surface-2: #1a2342;
+  --surface-3: #253058;
+  --ink: #e9eefc;
+  --muted: #8d99bb;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --primary: #5b8cff;
+  --primary-ink: #0a1030;
+  --primary-soft: rgba(91, 140, 255, 0.16);
+  --primary-shadow: rgba(91, 140, 255, 0.35);
+  --focus: #8fb0ff;
+  --danger: #ff9a9a;
+  --danger-line: rgba(255, 154, 154, 0.4);
+  --warn-bg: rgba(236, 209, 151, 0.12);
+  --warn-line: rgba(236, 209, 151, 0.35);
+  --warn-ink: #f4e3bb;
+  --ok-bg: rgba(90, 200, 140, 0.12);
+  --ok-line: rgba(90, 200, 140, 0.35);
+  --ok-ink: #c3ecd3;
+  --preview-bg: linear-gradient(160deg, #18235a 0%, #0e1433 100%);
+  --tile-a: linear-gradient(150deg, #3b78f5 0%, #5a50e0 100%);
+  --tile-a-line: transparent;
+  --tile-b: linear-gradient(150deg, #1d2750 0%, #0f1633 100%);
+  --tile-b-line: rgba(255, 255, 255, 0.12);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 18px 36px rgba(0, 0, 0, 0.55);
   --scrim: rgba(0, 0, 0, 0.62);
@@ -124,7 +124,7 @@ a { color: var(--primary); }
 .i-sun { display: none; }
 :root[data-theme="dark"] .i-sun { display: block; }
 :root[data-theme="dark"] .i-moon { display: none; }
-:root[data-theme="dark"] #themeToggle { color: var(--primary); border-color: var(--warn-line); background: var(--primary-soft); }
+:root[data-theme="dark"] #themeToggle { color: var(--primary); border-color: var(--line-strong); background: var(--primary-soft); }
 
 /* ───────── 홈 ───────── */
 .home { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 22px; }
@@ -135,21 +135,18 @@ a { color: var(--primary); }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .tile {
   min-height: 176px; padding: 18px; border-radius: var(--radius-lg); text-align: left;
-  font: inherit; color: var(--ink); cursor: pointer;
+  font: inherit; color: #ffffff; cursor: pointer;
   display: flex; flex-direction: column; justify-content: space-between; gap: 18px;
   border: 1px solid var(--tile-a-line); background: var(--tile-a); box-shadow: var(--shadow);
 }
 .tile-season { border-color: var(--tile-b-line); background: var(--tile-b); }
 .tile-icon {
-  width: 46px; height: 46px; border-radius: 16px; background: var(--surface); color: var(--primary);
+  width: 46px; height: 46px; border-radius: 16px; background: rgba(255, 255, 255, 0.2); color: #ffffff;
   display: inline-flex; align-items: center; justify-content: center;
 }
-:root[data-theme="dark"] .tile-icon { background: rgba(255, 255, 255, 0.1); }
-:root[data-theme="dark"] .tile-visit .tile-icon { color: var(--primary); background: var(--primary-soft); }
 .tile-text { display: flex; flex-direction: column; gap: 4px; }
 .tile-text strong { font-size: 18px; }
-.tile-text span { font-size: 12px; line-height: 1.5; color: var(--muted); }
-:root[data-theme="dark"] .tile-text span { color: #aeb7d6; }
+.tile-text span { font-size: 12px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
 .home-block { display: flex; flex-direction: column; gap: 10px; }
 .block-title { margin: 0; font-size: 15px; font-weight: 700; }
