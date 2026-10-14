@@ -5,7 +5,7 @@
 
   // 값이 바뀌면 미리보기를 다시 그리는 입력칸
   var inputIds = ['seasonTitle', 'recipient', 'honorific', 'honorificCustom', 'recipient2', 'honorific2',
-    'honorific2Custom', 'greeting', 'verse', 'ref', 'version', 'sender', 'closing', 'closingCustom'];
+    'honorific2Custom', 'greeting', 'headline', 'verse', 'ref', 'version', 'sender', 'closing', 'closingCustom'];
   // 로고 크기 비율 / 로고 색 선택지
   var LOGO_SCALE = { s: 0.75, m: 1, l: 1.35 };
   var LOGO_SIZES = [['s', '작게'], ['m', '보통'], ['l', '크게']];
@@ -18,9 +18,10 @@
   var config = null;
   var greetings = null;
   // splitOn: 긴 말씀을 절 단위로 여러 장으로 나누는 중 / page: 미리보기 중인 장(0부터) / showNo: "1/3" 표시
-  var state = { type: 'visit', splitOn: false, page: 0, showNo: true };
+  var state = { type: 'visit', kind: 'verse', splitOn: false, page: 0, showNo: true };
   var design = { template: 'cream', size: 'square', season: null, palette: null, font: null, deco: true, step: 0,
-    logoOn: true, logoColor: 'auto', logoSize: 'm', logoPref: 1 };
+    logoOn: true, logoColor: 'auto', logoSize: 'm', logoPref: 1, photoPos: 'center', photoShade: 1 };
+  var photoData = null; // 사진 템플릿에 쓰는 배경 사진(이 기기에만 저장)
   var logoMonoImg = null; // 로고 모양 마스크(색을 입히는 데 사용)
   var BUILTIN_LOGO = 'assets/logo/leaf.png'; // 기본 로고(교회 로고 중 나뭇잎만)
   var logoData = { orig: null, mono: null, builtin: false };
@@ -52,9 +53,11 @@
       recipient2: $('recipient2').value,
       honorific2: honorificOf('honorific2', 'honorific2Custom'),
       greeting: $('greeting').value,
+      kind: state.kind,
+      headline: state.kind === 'text' ? $('headline').value : '',
       verse: $('verse').value,
       ref: $('ref').value,
-      version: $('version').value,
+      version: state.kind === 'text' ? '' : $('version').value,
       sender: $('sender').value,
       closing: $('closing').value === CUSTOM ? $('closingCustom').value.trim() : $('closing').value
     };
@@ -65,7 +68,9 @@
     var d = Object.assign({}, data);
     if (!d.verse.trim()) {
       var tpl = byId(config.templates, design.template);
-      d.verse = tpl && tpl.emphasis
+      d.verse = d.kind === 'text'
+        ? '전하고 싶은 문장이\n이곳에 표시됩니다.'
+        : tpl && tpl.emphasis
         ? '앞부분 말씀이 이곳에\n**강조할 구절을\n크게 보여줘요**\n뒷부분 말씀'
         : '말씀 본문을 입력하면\n이곳에 표시됩니다.';
     }
@@ -137,7 +142,10 @@
       deco: design.deco,
       step: design.step,
       logo: logoSource(),
-      logoScale: LOGO_SCALE[design.logoSize] || 1
+      logoScale: LOGO_SCALE[design.logoSize] || 1,
+      photo: photoData,
+      photoPos: design.photoPos,
+      photoShade: design.photoShade
     };
   }
 
@@ -234,7 +242,10 @@
     var size = VerseCard.sizeOf(design);
     VerseHistory.add({
       via: via, type: state.type, label: sentLabel(), recipients: recipients,
-      ref: (data.ref || '').trim(), version: data.version || '',
+      ref: state.kind === 'text'
+        ? ((data.headline || '').trim() || (data.verse || '').trim().split('\n')[0].slice(0, 24))
+        : (data.ref || '').trim(),
+      version: data.version || '',
       size: size.id, sizeName: size.name, template: design.template, pages: pages.length
     });
     renderHomeHistory();
@@ -303,6 +314,7 @@
   function updateSentHint() {
     var hint = $('sentHint');
     if (!hint) return;
+    if (state.kind === 'text') { hint.hidden = true; return; }
     var d = readData();
     var names = [d.recipient, d.recipient2];
     var found = VerseHistory.findSent(names, d.ref.trim() ? VerseLibrary.refKey(d.ref) : '', VerseLibrary.refKey);
@@ -836,6 +848,31 @@
     $('decoToggle').addEventListener('change', function () { design.deco = this.checked; saveDesign(); render(); });
     $('logoToggle').addEventListener('change', function () { design.logoOn = this.checked; saveDesign(); render(); });
     $('logoFile').addEventListener('change', onLogoPicked);
+
+    // 배경 사진 / 내용 종류
+    $('photoFile').addEventListener('change', onPhotoPicked);
+    $('photoClear').addEventListener('click', function () {
+      photoData = null; VerseStore.remove('photo');
+      syncControls(); render();
+    });
+    [['photoPosChips', [['top', '위'], ['center', '가운데'], ['bottom', '아래']], 'photoPos'],
+     ['photoShadeChips', [['0', '연하게'], ['1', '보통'], ['2', '진하게']], 'photoShade']].forEach(function (spec) {
+      var box = $(spec[0]);
+      spec[1].forEach(function (o) { box.appendChild(makeChip(o[0], o[1])); });
+      box.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-value]');
+        if (!b) return;
+        design[spec[2]] = spec[2] === 'photoShade' ? parseInt(b.dataset.value, 10) : b.dataset.value;
+        syncControls(); saveDesign(); render();
+      });
+    });
+    $('kindChips').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-kind]');
+      if (!b) return;
+      state.kind = b.dataset.kind;
+      VerseStore.set('kind', state.kind);
+      applyKind(); render();
+    });
     // 올린 로고를 지우면 기본 로고(나뭇잎)로 되돌아간다.
     $('logoClear').addEventListener('click', function () {
       VerseStore.remove('logo');
@@ -884,6 +921,14 @@
     $('logoName').textContent = logoData.builtin ? '기본 로고(높은뜻푸른교회 나뭇잎)' : '내가 올린 로고';
     setPressed($('logoColorChips'), design.logoColor || 'auto');
     setPressed($('logoSizeChips'), design.logoSize || 'm');
+    var tplCfg = byId(config.templates, design.template);
+    var isPhoto = !!(tplCfg && tplCfg.photo);
+    $('photoField').hidden = !isPhoto;
+    $('paletteField').hidden = isPhoto;
+    $('photoPickText').textContent = photoData ? '사진 바꾸기' : '사진 고르기';
+    $('photoClear').hidden = !photoData;
+    setPressed($('photoPosChips'), design.photoPos);
+    setPressed($('photoShadeChips'), String(design.photoShade));
     updateStepLabel();
   }
 
@@ -908,6 +953,63 @@
         syncControls(); saveDesign(); render();
       });
     }).catch(function () { toast('이미지를 열 수 없습니다.'); });
+  }
+
+  // ── 배경 사진 ──
+  // 큰 사진은 긴 변 1920px, JPEG로 줄여서 이 기기에만 저장한다.
+  function photoFromFile(file) {
+    var MAX = 1920;
+    function draw(src, w, h) {
+      var k = Math.min(1, MAX / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.82);
+    }
+    var viaBitmap = window.createImageBitmap
+      ? createImageBitmap(file).then(function (bmp) { var u = draw(bmp, bmp.width, bmp.height); if (bmp.close) bmp.close(); return u; })
+      : Promise.reject(new Error('no bitmap'));
+    return viaBitmap.catch(function () {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () { try { resolve(draw(img, img.naturalWidth, img.naturalHeight)); } catch (e) { reject(e); } URL.revokeObjectURL(url); };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('image')); };
+        img.src = url;
+      });
+    });
+  }
+
+  function onPhotoPicked() {
+    var file = this.files && this.files[0];
+    this.value = '';
+    if (!file) return;
+    photoFromFile(file).then(function (url) {
+      photoData = url;
+      if (!VerseStore.set('photo', url)) {
+        VerseStore.remove('photo');
+        toast('사진이 커서 이 기기에 저장하지 못했어요. 이번에만 사용돼요.');
+      }
+      syncControls(); render();
+    }).catch(function () { toast('이 사진을 열 수 없어요. 다른 사진을 골라 주세요.'); });
+  }
+
+  // ── 내용 종류: 성경 말씀 / 일반 글 ──
+  var VERSE_PLACEHOLDER = '';
+  var REF_PLACEHOLDER = '';
+  function applyKind() {
+    var text = state.kind === 'text';
+    $('verseLabel').textContent = text ? '내용' : '말씀 본문';
+    $('verse').placeholder = text
+      ? '전하고 싶은 문장이나 설교 요약을 입력해 주세요. 줄을 바꾸면 그대로 줄이 나뉘고, 긴 글은 줄 단위로 여러 장에 나눌 수 있어요.'
+      : VERSE_PLACEHOLDER;
+    $('ref').placeholder = text ? '이름·출처 (선택) · 예: 주일 설교 10.25' : REF_PLACEHOLDER;
+    $('openLibrary').hidden = text;
+    $('version').hidden = text;
+    $('headlineField').hidden = !text;
+    $('kindHint').hidden = !text;
+    document.querySelectorAll('#kindChips [data-kind]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.kind === state.kind));
+    });
   }
 
   // ── 내보내기 ──
@@ -1172,6 +1274,11 @@
       if (typeof closing.c === 'string') $('closingCustom').value = closing.c;
       $('closingCustom').hidden = $('closing').value !== CUSTOM;
     }
+    if (saved && ['top', 'center', 'bottom'].indexOf(saved.photoPos) >= 0) design.photoPos = saved.photoPos;
+    if (saved && saved.photoShade >= 0 && saved.photoShade <= 2) design.photoShade = parseInt(saved.photoShade, 10);
+    var ph = VerseStore.get('photo', null);
+    photoData = typeof ph === 'string' && ph.indexOf('data:image/') === 0 ? ph : null;
+    state.kind = VerseStore.get('kind', 'verse') === 'text' ? 'text' : 'verse';
     var type = VerseStore.get('type', 'visit');
     state.type = type === 'season' ? 'season' : 'visit';
   }
@@ -1186,7 +1293,10 @@
     fillSelect($('situation'), greetings.situations);
     fillSelect($('season'), config.seasons);
 
+    VERSE_PLACEHOLDER = $('verse').placeholder;
+    REF_PLACEHOLDER = $('ref').placeholder;
     restore();
+    applyKind();
     lastDesignJson = JSON.stringify(design); // 앱을 여는 것만으로는 "설정을 고친 시각"을 바꾸지 않는다
     buildControls();
     bindEvents();

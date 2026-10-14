@@ -18,6 +18,7 @@
   var STEP_PX = 4;
   var WIDTH_MARGIN_PCT = 4; // 글자 크기 계산 시 말씀 폭에 두는 여유(%)
   var LINE_HEIGHTS = [1.75, 1.65, 1.55, 1.5, 1.45, 1.4]; // 말씀 줄간격: 넓은 쪽부터 시험, 가장 좁은 값(1.4)이 최소
+  var SHADES = [0.3, 0.5, 0.72]; // 사진 위를 어둡게 덮는 정도(연하게·보통·진하게)
   var config = null;
 
   // 템플릿별 장식. 모두 이 프로젝트용으로 직접 만든 도형이며, 고정된 내부 문자열만 사용한다.
@@ -37,6 +38,8 @@
       layer: '<div class="blob b1"></div><div class="blob b2"></div>',
       icon: '<div class="bar"></div>'
     },
+    photo: { layer: '<div class="photo-bg"></div><div class="photo-shade"></div>', icon: '' },
+    photoc: { layer: '<div class="photo-bg"></div><div class="photo-shade"></div>', icon: '' },
     emfade: { layer: '', icon: '' },
     embracket: { layer: '<div class="grain"></div>', icon: '' },
     emmarker: { layer: '<div class="frame-a"></div><div class="frame-b"></div>', icon: '' },
@@ -145,12 +148,13 @@
   function refLine(data) {
     var ref = (data.ref || '').trim();
     if (!ref) return '';
-    return data.version ? ref + ' · ' + data.version : ref;
+    return data.version && data.kind !== 'text' ? ref + ' · ' + data.version : ref;
   }
 
   function applyTheme(card, tpl, design, size, season) {
     var c = season ? season.colors : tpl.colors;
     var pal = design.palette ? byId(config.palettes, design.palette) : null;
+    if (tpl.photo) pal = null; // 사진 위에서는 글자색이 고정이라 배경색 선택을 쓰지 않는다
     if (pal) c = pal;
     var font = byId(config.fonts, design.font || tpl.font) || config.fonts[0];
     var verseSize = size.verseSize + (design.step || 0) * STEP_PX;
@@ -164,6 +168,7 @@
       '--ai': tpl.align === 'left' ? 'flex-start' : 'center',
       '--ta': tpl.align === 'left' ? 'left' : 'center'
     };
+    vars['--shade'] = String(SHADES[design.photoShade] != null ? SHADES[design.photoShade] : SHADES[1]);
     if (!pal && c.mark) vars['--mark'] = c.mark; // 형광펜 색(배경색을 따로 고르면 강조색에서 만든다)
     Object.keys(vars).forEach(function (k) { card.style.setProperty(k, vars[k]); });
     card.style.width = size.w + 'px';
@@ -206,6 +211,11 @@
     var layer = el('div', 'decor');
     layer.setAttribute('aria-hidden', 'true');
     layer.innerHTML = decor.layer; // 고정 문자열(사용자 입력 아님)
+    var pbg = layer.querySelector('.photo-bg');
+    if (pbg && typeof design.photo === 'string' && design.photo.indexOf('data:image/') === 0) {
+      pbg.style.backgroundImage = 'url("' + design.photo + '")';
+      pbg.style.backgroundPosition = 'center ' + (design.photoPos === 'top' ? 'top' : (design.photoPos === 'bottom' ? 'bottom' : 'center'));
+    }
     var grain = layer.querySelector('.grain');
     if (grain) grain.style.backgroundImage = 'url(' + paperGrainUrl() + ')';
     card.appendChild(layer);
@@ -222,6 +232,9 @@
 
     var to = toLine(data);
     if (to) content.appendChild(el('div', 'to', to));
+
+    var headline = (data.headline || '').trim();
+    if (headline) content.appendChild(el('div', 'headline', headline));
 
     var greeting = (data.greeting || '').trim();
     if (greeting) content.appendChild(el('div', 'greeting', greeting));

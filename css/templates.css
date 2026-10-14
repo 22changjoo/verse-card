@@ -171,3 +171,24 @@
 .tpl-emgold .gold-b { bottom: 72px; }
 .tpl-emgold .verse.has-em .ev-dim { color: color-mix(in srgb, var(--ink) 34%, var(--bg)); }
 .tpl-emgold .verse.has-em .ev-em { font-weight: 900; font-size: 1.25em; color: var(--accent); margin: 0.1em 0; }
+
+/* ───── 제목 (일반 글 카드) ───── */
+.card .headline {
+  flex: none; width: 100%; box-sizing: border-box;
+  font-size: calc(var(--verse-size) * 1.2); font-weight: 700; line-height: 1.35; color: var(--ink); white-space: pre-line;
+}
+
+/* ───── 사진 템플릿: 올린 사진 위에 어두운 막을 덮고 흰 글을 얹는다 ───── */
+.tpl-photo .photo-bg, .tpl-photoc .photo-bg {
+  position: absolute; inset: 0; background: linear-gradient(160deg, #2a3866 0%, #4b2f6e 100%);
+  background-size: cover; background-repeat: no-repeat;
+}
+.tpl-photo .photo-shade, .tpl-photoc .photo-shade { position: absolute; inset: 0; }
+.tpl-photo .photo-shade { background: linear-gradient(to top, rgba(8, 12, 26, var(--shade)) 0%, rgba(8, 12, 26, calc(var(--shade) * 0.6)) 50%, rgba(8, 12, 26, calc(var(--shade) * 0.15)) 100%); }
+.tpl-photoc .photo-shade { background: rgba(8, 12, 26, var(--shade)); }
+.tpl-photo .icon, .tpl-photoc .icon, .tpl-photo .rule, .tpl-photoc .rule { display: none; }
+.tpl-photo .content { justify-content: flex-end; }
+.tpl-photoc .content { justify-content: center; }
+.tpl-photo .body, .tpl-photoc .body { flex: 0 1 auto; }
+.tpl-photo .headline, .tpl-photoc .headline { font-size: calc(var(--verse-size) * 1.5); font-weight: 900; line-height: 1.25; }
+.tpl-photo .ref, .tpl-photoc .ref { color: rgba(255, 255, 255, 0.85); }

@@ -236,6 +236,15 @@
     </div>
 
     <div class="field">
+      <span class="label">내용 종류</span>
+      <div class="chips" id="kindChips" role="group" aria-label="내용 종류">
+        <button type="button" class="chip" data-kind="verse" aria-pressed="true">성경 말씀</button>
+        <button type="button" class="chip" data-kind="text" aria-pressed="false">일반 글 · 설교 요약</button>
+      </div>
+      <p class="hint" id="kindHint">일반 글은 성경 구절 대신 전하고 싶은 문장이나 설교 요약을 그대로 카드에 담아요.</p>
+    </div>
+
+    <div class="field">
       <label for="greeting">인사말</label>
       <textarea id="greeting" rows="3" placeholder="예: 요즘 마음에 자주 떠올라 이 말씀을 함께 보냅니다."></textarea>
       <div class="suggest" id="greetingSuggest" hidden>
@@ -244,16 +253,21 @@
       </div>
     </div>
 
+    <div class="field" id="headlineField" hidden>
+      <label for="headline">제목 (선택)</label>
+      <input id="headline" type="text" autocomplete="off" placeholder="예: 다음 세대를 위한 준비">
+    </div>
+
     <div class="field">
       <div class="label-row">
-        <label for="verse">말씀 본문</label>
+        <label for="verse" id="verseLabel">말씀 본문</label>
         <div class="label-actions">
           <button type="button" class="chip small" id="emphasizeBtn" title="말씀에서 강조할 구절을 고른 뒤 누르세요">선택한 구절 강조</button>
           <button type="button" class="chip small" id="openLibrary">라이브러리에서 선택</button>
         </div>
       </div>
       <textarea id="verse" rows="5" placeholder="말씀 본문을 직접 붙여넣거나 입력해 주세요. 절마다 줄을 바꾸거나 절 번호(1 2 3)를 넣으면 긴 말씀을 절 단위로 나눌 수 있습니다."></textarea>
-      <p class="hint">강조할 구절은 <strong>**별표 두 개**</strong>나 <strong>[대괄호]</strong>로 감싸세요. "강조" 템플릿에서 크게 나오고, 다른 템플릿에서는 표시만 사라집니다.</p>
+      <p class="hint" id="emphHint">강조할 구절은 <strong>**별표 두 개**</strong>나 <strong>[대괄호]</strong>로 감싸세요. "강조" 템플릿에서 크게 나오고, 다른 템플릿에서는 표시만 사라집니다.</p>
 
       <div class="splitbox" id="splitBox" hidden>
         <p id="splitMsg" class="split-msg"></p>
@@ -303,7 +317,20 @@
       <div class="chips" id="sizeChips" role="group" aria-label="크기"></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="photoField" hidden>
+      <span class="label">배경 사진</span>
+      <div class="logo-row">
+        <label class="chip file-chip"><span id="photoPickText">사진 고르기</span><input type="file" id="photoFile" accept="image/*" hidden></label>
+        <button type="button" class="chip" id="photoClear" hidden>사진 지우기</button>
+      </div>
+      <span class="label">사진에서 보일 부분</span>
+      <div class="chips" id="photoPosChips" role="group" aria-label="사진 위치"></div>
+      <span class="label">글자가 잘 보이게 어둡게</span>
+      <div class="chips" id="photoShadeChips" role="group" aria-label="어둡게"></div>
+      <p class="hint">사진은 이 기기에만 저장되고 어디로도 전송되지 않아요. 사람 얼굴이 크게 나온 사진은 사용 허락을 받은 것만 쓰세요.</p>
+    </div>
+
+    <div class="field" id="paletteField">
       <span class="label">배경색</span>
       <div class="swatches" id="paletteSwatches" role="group" aria-label="배경색"></div>
     </div>
