@@ -333,6 +333,7 @@
     <div class="field">
       <span class="label">글꼴</span>
       <div class="chips" id="fontChips" role="group" aria-label="글꼴"></div>
+      <button type="button" class="link-btn" id="fontManage">+ 글꼴 추가 · 삭제</button>
     </div>
 
     <div class="field">
@@ -372,6 +373,28 @@
 </div>
 
 <datalist id="recentNames"></datalist>
+
+<dialog class="sheet" id="fontDialog" aria-labelledby="fontTitle">
+  <div class="sheet-head">
+    <h2 id="fontTitle">내 글꼴</h2>
+    <button type="button" class="chip" id="fontClose">닫기</button>
+  </div>
+  <span class="label">구글 폰트 이름으로 추가</span>
+  <div class="row">
+    <input id="fontGoogleName" type="text" autocomplete="off" placeholder="예: Jua, Do Hyeon, Gaegu">
+    <button type="button" class="chip small" id="fontGoogleAdd">추가</button>
+  </div>
+  <p class="hint">fonts.google.com에서 한글을 지원하는 글꼴 이름을 영문 그대로 넣어 주세요. 인터넷이 연결되어 있어야 해요.</p>
+  <span class="label">내 글꼴 파일 올리기</span>
+  <div class="row">
+    <input id="fontFileName" type="text" autocomplete="off" placeholder="표시할 이름 (비우면 파일 이름)">
+    <label class="chip small file-chip"><span>파일 고르기</span><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2" hidden></label>
+  </div>
+  <p class="hint">.ttf .otf .woff .woff2 파일을 쓸 수 있어요. 파일이 크면(5MB 넘으면) 이미지 저장이 느려질 수 있어요. 사용 허락이 있는 글꼴만 쓰세요.</p>
+  <span class="label">추가한 글꼴</span>
+  <ul class="font-list" id="fontList"></ul>
+  <p class="hint" id="fontMsg" role="status"></p>
+</dialog>
 
 <dialog class="sheet" id="photoDialog" aria-labelledby="photoTitle">
   <div class="sheet-head">
@@ -427,6 +450,7 @@
 <script src="js/split.js"></script>
 <script src="js/library.js"></script>
 <script src="js/history.js"></script>
+<script src="js/fonts.js"></script>
 <script src="js/export.js"></script>
 <script src="js/print.js"></script>
 <script src="js/logo.js"></script>

@@ -220,6 +220,8 @@ a { color: var(--primary); }
   display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 8px;
 }
 .sub-label { margin-top: 14px; }
+/* 칩 모양 라벨(파일 고르기 등)은 .field label의 줄 배치·여백을 따르지 않고 칩처럼 가운데 정렬한다. */
+.field label.chip, .sheet label.chip { display: inline-flex; align-items: center; justify-content: center; margin: 0; font-size: 14px; font-weight: 500; color: var(--ink); }
 .label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .label-row label { margin-bottom: 0; }
 .row { display: flex; gap: 8px; }
@@ -394,6 +396,11 @@ body[data-view="home"] .toast { bottom: 24px; }
 .history-sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-when { font-size: 12px; color: var(--muted); flex: none; }
 .label-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.font-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.font-list:empty::before { content: "아직 추가한 글꼴이 없어요."; font-size: 13px; color: var(--muted); }
+.font-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); }
+.font-item .fn { font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.font-item .fk { font-size: 11px; color: var(--muted); }
 .fav-list { display: flex; flex-direction: column; gap: 8px; }
 .fav-list:empty { display: none; }
 .fav-item { display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -466,3 +473,6 @@ body[data-view="home"] .toast { bottom: 24px; }
   .toast, body[data-view="home"] .toast { bottom: 28px; max-width: 480px; }
   .sheet { margin: auto; border-radius: 24px; width: min(560px, 92vw); max-height: 86vh; }
 }
+
+/* 팝업 안의 작은 칩은 글자가 줄바꿈되지 않게 한다. */
+.sheet .chip { white-space: nowrap; flex: none; }

@@ -772,6 +772,59 @@
     return s;
   }
 
+  // 글꼴 칩(기본 글꼴 + 내가 추가한 글꼴)
+  function buildFontChips() {
+    var fontBox = $('fontChips');
+    fontBox.replaceChildren();
+    fontBox.appendChild(makeChip('', '템플릿 기본'));
+    config.fonts.forEach(function (f) {
+      var b = makeChip(f.id, f.name);
+      b.style.fontFamily = f.family;
+      fontBox.appendChild(b);
+    });
+    setPressed(fontBox, design.font || '');
+  }
+
+  function fontMsg(t) { $('fontMsg').textContent = t || ''; }
+
+  function renderFontList() {
+    var ul = $('fontList');
+    ul.replaceChildren();
+    VerseFonts.list().forEach(function (f) {
+      var li = document.createElement('li');
+      li.className = 'font-item';
+      var left = document.createElement('div');
+      left.style.minWidth = '0';
+      var name = document.createElement('div');
+      name.className = 'fn';
+      name.style.fontFamily = "'" + f.family + "', sans-serif";
+      name.textContent = f.name + ' 가나다 ABC';
+      var kind = document.createElement('div');
+      kind.className = 'fk';
+      kind.textContent = f.kind === 'google' ? '구글 폰트' : '내 파일';
+      left.appendChild(name); left.appendChild(kind);
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'chip danger';
+      del.dataset.fontDel = f.id;
+      del.textContent = '삭제';
+      li.appendChild(left); li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+
+  function addFontToConfig(f) {
+    if (config.fonts.some(function (x) { return x.id === f.id; })) return;
+    config.fonts.push({ id: f.id, name: f.name, family: "'" + f.family + "', sans-serif", custom: true });
+  }
+
+  function afterFontChange(f, msg) {
+    addFontToConfig(f);
+    design.font = f.id; // 방금 추가한 글꼴을 바로 써 본다
+    buildFontChips(); renderFontList(); syncControls(); saveDesign(); render();
+    fontMsg(msg);
+  }
+
   function buildControls() {
     var tplBox = $('tplChips');
     config.templates.forEach(function (t) {
@@ -831,18 +884,44 @@
       syncControls(); saveDesign(); render();
     });
 
-    var fontBox = $('fontChips');
-    fontBox.appendChild(makeChip('', '템플릿 기본'));
-    config.fonts.forEach(function (f) {
-      var b = makeChip(f.id, f.name);
-      b.style.fontFamily = f.family;
-      fontBox.appendChild(b);
-    });
-    fontBox.addEventListener('click', function (e) {
+    buildFontChips();
+    $('fontChips').addEventListener('click', function (e) {
       var b = e.target.closest('[data-value]');
       if (!b) return;
       design.font = b.dataset.value || null;
       syncControls(); saveDesign(); render();
+    });
+    $('fontManage').addEventListener('click', function () { renderFontList(); $('fontDialog').showModal(); });
+    $('fontClose').addEventListener('click', function () { $('fontDialog').close(); });
+    $('fontGoogleAdd').addEventListener('click', function () {
+      var name = $('fontGoogleName').value;
+      fontMsg('추가하는 중…');
+      VerseFonts.addGoogle(name).then(function (f) {
+        $('fontGoogleName').value = '';
+        afterFontChange(f, '"' + f.name + '" 글꼴을 추가했어요.');
+      }).catch(function (e) { fontMsg(e.message); });
+    });
+    $('fontFile').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      this.value = '';
+      if (!file) return;
+      fontMsg('불러오는 중…');
+      VerseFonts.addFile(file, $('fontFileName').value).then(function (f) {
+        $('fontFileName').value = '';
+        afterFontChange(f, '"' + f.name + '" 글꼴을 추가했어요.');
+      }).catch(function (e) { fontMsg(e.message); });
+    });
+    $('fontList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-font-del]');
+      if (!b) return;
+      var f = config.fonts.filter(function (x) { return x.id === b.dataset.fontDel; })[0];
+      if (!f || !window.confirm('글꼴 "' + f.name + '"을(를) 지울까요?')) return;
+      VerseFonts.remove(f.id).then(function () {
+        config.fonts = config.fonts.filter(function (x) { return x.id !== f.id; });
+        if (design.font === f.id) design.font = null;
+        buildFontChips(); renderFontList(); syncControls(); saveDesign(); render();
+        fontMsg('지웠어요.');
+      });
     });
 
     $('stepDown').addEventListener('click', function () { design.step = Math.max(STEP_MIN, design.step - 1); saveDesign(); render(); });
@@ -1303,6 +1382,8 @@
     fillSelect($('situation'), greetings.situations);
     fillSelect($('season'), config.seasons);
 
+    VerseFonts.load().forEach(addFontToConfig);
+    VerseFonts.registerAll().then(function () { render(); });
     VERSE_PLACEHOLDER = $('verse').placeholder;
     REF_PLACEHOLDER = $('ref').placeholder;
     restore();

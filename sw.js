@@ -4,7 +4,7 @@
  *
  * 파일을 수정해서 배포할 때는 아래 VERSION 숫자를 올려 주세요. 그래야 기존 사용자의 캐시가 새로 바뀝니다.
  */
-var VERSION = 'v20';
+var VERSION = 'v21';
 var APP_CACHE = 'verse-card-app-' + VERSION;
 var FONT_CACHE = 'verse-card-fonts-v1';
 
@@ -28,6 +28,7 @@ var APP_FILES = [
   'js/drive.js',
   'js/sync-config.js',
   'js/sync.js',
+  'js/fonts.js',
   'js/export.js',
   'js/print.js',
   'js/logo.js',

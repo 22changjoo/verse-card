@@ -25,16 +25,17 @@
   // 구글 폰트는 다른 도메인의 스타일시트라서 이미지 변환 도구가 안의 글꼴 정보를 읽지 못한다.
   // 그러면 저장된 이미지에서만 글꼴이 기본 글꼴로 바뀌어 글자가 더 넓어지고, 줄이 늘어 말씀이 잘린다.
   // 그래서 구글 폰트 CSS를 직접 받아 이 카드에 쓰인 글꼴·글자만 골라 변환 도구에 넘긴다.
-  var fontCssPromise = null;
+  var fontCssCache = {}; // 스타일시트 주소 → Promise<CSS 글>
   function loadGoogleFontCss() {
-    if (!fontCssPromise) {
-      var link = document.querySelector('link[href*="fonts.googleapis.com/css"]');
-      fontCssPromise = link
-        ? fetch(link.href).then(function (r) { return r.ok ? r.text() : ''; }).catch(function () { return ''; })
-        : Promise.resolve('');
-      fontCssPromise.then(function (t) { if (!t) fontCssPromise = null; }); // 실패하면 다음에 다시 시도
-    }
-    return fontCssPromise;
+    var links = Array.prototype.slice.call(document.querySelectorAll('link[href*="fonts.googleapis.com/css"]'));
+    return Promise.all(links.map(function (link) {
+      var href = link.href;
+      if (!fontCssCache[href]) {
+        fontCssCache[href] = fetch(href).then(function (r) { return r.ok ? r.text() : ''; }).catch(function () { return ''; });
+        fontCssCache[href].then(function (t) { if (!t) delete fontCssCache[href]; }); // 실패하면 다음에 다시 시도
+      }
+      return fontCssCache[href];
+    })).then(function (parts) { return parts.join('\n'); });
   }
 
   function inRanges(code, rangeText) {
@@ -69,7 +70,6 @@
 
   async function buildFontCss(card) {
     var css = await loadGoogleFontCss();
-    if (!css) return '';
     var families = {}, weights = { 400: true };
     card.querySelectorAll('*').forEach(function (n) {
       if (!n.childNodes.length || !Array.prototype.some.call(n.childNodes, function (c) { return c.nodeType === 3 && c.textContent.trim(); })) return;
@@ -78,6 +78,7 @@
       var w = parseInt(cs.fontWeight, 10) || 400;
       weights[w >= 800 ? 900 : (w >= 600 ? 700 : (w === 500 ? 500 : 400))] = true;
     });
+    var fileFontCss = global.VerseFonts ? await global.VerseFonts.fileCss(families) : '';
     var chars = {};
     (card.textContent || '').split('').forEach(function (ch) { chars[ch.charCodeAt(0)] = true; });
     var codes = Object.keys(chars).map(Number);
@@ -98,7 +99,7 @@
         return block.replace(m[0], 'url(' + data + ')');
       }).catch(function () { return ''; }); // 받지 못한 조각은 건너뛴다
     }));
-    return inlined.filter(Boolean).join('\n');
+    return inlined.filter(Boolean).concat(fileFontCss ? [fileFontCss] : []).join('\n');
   }
 
   async function renderToBlob(data, design) {
