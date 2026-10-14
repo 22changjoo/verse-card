@@ -345,6 +345,8 @@ body[data-view="home"] .toast { bottom: 24px; }
   display: flex; flex-direction: column; gap: 12px;
 }
 .sheet:not([open]) { display: none; }
+.photo-thumb { display: flex; align-items: center; justify-content: center; min-height: 120px; max-height: 220px; border-radius: 16px; overflow: hidden; background: var(--surface-3); color: var(--muted); font-size: 13px; }
+.photo-thumb img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
 .sheet::backdrop { background: var(--scrim); }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; }
 .sheet-head h2 { margin: 0; font-size: 17px; }

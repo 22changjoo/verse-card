@@ -315,14 +315,9 @@
     <div class="field" id="photoField" hidden>
       <span class="label">배경 사진</span>
       <div class="logo-row">
-        <label class="chip file-chip"><span id="photoPickText">사진 고르기</span><input type="file" id="photoFile" accept="image/*" hidden></label>
-        <button type="button" class="chip" id="photoClear" hidden>사진 지우기</button>
+        <button type="button" class="chip" id="photoOpen">사진 설정 열기</button>
+        <span class="hint" id="photoState">사진을 아직 고르지 않았어요</span>
       </div>
-      <span class="label">사진에서 보일 부분</span>
-      <div class="chips" id="photoPosChips" role="group" aria-label="사진 위치"></div>
-      <span class="label">글자가 잘 보이게 어둡게</span>
-      <div class="chips" id="photoShadeChips" role="group" aria-label="어둡게"></div>
-      <p class="hint">사진은 이 기기에만 저장되고 어디로도 전송되지 않아요. 사람 얼굴이 크게 나온 사진은 사용 허락을 받은 것만 쓰세요.</p>
     </div>
 
     <div class="field">
@@ -377,6 +372,24 @@
 </div>
 
 <datalist id="recentNames"></datalist>
+
+<dialog class="sheet" id="photoDialog" aria-labelledby="photoTitle">
+  <div class="sheet-head">
+    <h2 id="photoTitle">배경 사진</h2>
+    <button type="button" class="chip" id="photoClose">닫기</button>
+  </div>
+  <div class="photo-thumb" id="photoThumbBox"><img id="photoThumb" alt="" hidden><span id="photoThumbEmpty">사진을 고르면 여기에 작게 보여요</span></div>
+  <div class="logo-row">
+    <label class="chip file-chip"><span id="photoPickText">사진 고르기</span><input type="file" id="photoFile" accept="image/*" hidden></label>
+    <button type="button" class="chip" id="photoClear" hidden>사진 지우기</button>
+  </div>
+  <span class="label">사진에서 보일 부분</span>
+  <div class="chips" id="photoPosChips" role="group" aria-label="사진 위치"></div>
+  <span class="label">글자가 잘 보이게 어둡게</span>
+  <div class="chips" id="photoShadeChips" role="group" aria-label="어둡게"></div>
+  <p class="hint">사진은 이 기기에만 저장되고 어디로도 전송되지 않아요. 사람 얼굴이 크게 나온 사진은 사용 허락을 받은 것만 쓰세요.</p>
+  <button type="button" class="btn primary" id="photoDone">완료</button>
+</dialog>
 
 <dialog class="sheet" id="printDialog" aria-labelledby="printTitle">
   <div class="sheet-head">

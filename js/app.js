@@ -786,7 +786,8 @@
       design.userPickedTemplate = true;
       syncControls(); saveDesign(); render();
       // 사진 템플릿을 고르면 바로 아래에 나타나는 사진 칸이 화면 밖이면 보이는 곳으로 옮긴다.
-      if (!$('photoField').hidden) $('photoField').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // 사진 템플릿을 처음 고르면 사진 설정 창을 바로 열어 준다.
+      if (!$('photoField').hidden && !photoData && !$('photoDialog').open) $('photoDialog').showModal();
     });
 
     var sizeBox = $('sizeChips');
@@ -853,6 +854,9 @@
 
     // 배경 사진 / 내용 종류
     $('photoFile').addEventListener('change', onPhotoPicked);
+    $('photoOpen').addEventListener('click', function () { $('photoDialog').showModal(); });
+    $('photoClose').addEventListener('click', function () { $('photoDialog').close(); });
+    $('photoDone').addEventListener('click', function () { $('photoDialog').close(); });
     $('photoClear').addEventListener('click', function () {
       photoData = null; VerseStore.remove('photo');
       syncControls(); render();
@@ -928,6 +932,10 @@
     $('photoField').hidden = !isPhoto;
     $('paletteField').hidden = isPhoto;
     $('photoPickText').textContent = photoData ? '사진 바꾸기' : '사진 고르기';
+    $('photoState').textContent = photoData ? '사진이 들어 있어요' : '사진을 아직 고르지 않았어요';
+    $('photoThumb').hidden = !photoData;
+    if (photoData && $('photoThumb').dataset.len !== String(photoData.length)) { $('photoThumb').src = photoData; $('photoThumb').dataset.len = String(photoData.length); }
+    $('photoThumbEmpty').hidden = !!photoData;
     $('photoClear').hidden = !photoData;
     setPressed($('photoPosChips'), design.photoPos);
     setPressed($('photoShadeChips'), String(design.photoShade));
